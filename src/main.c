@@ -1,54 +1,24 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <SDL2/SDL.h>
+#include <stdint.h>
+#include "display.h"
 
-//************************
-//Global Variables
-//************************
 bool is_running = false;
-SDL_Window* window = NULL;
-SDL_Renderer* renderer = NULL;
-
-/*Initialize an SDL Window and verify it works properly*/
-bool initialize_window(void)
-{
-    //Iniitalize SDL
-    if (SDL_Init(SDL_INIT_EVERYTHING) != 0) //SDL Constant to init everything
-    {
-        fprintf(stderr, "Error initializing SDL. \n");
-        return false;
-    }
-
-    /*args: Title, xPos of window, yPos of window, width, height, flags*/
-    window = SDL_CreateWindow(
-        NULL,
-        SDL_WINDOWPOS_CENTERED,
-        SDL_WINDOWPOS_CENTERED,
-        800,
-        600,
-        SDL_WINDOW_BORDERLESS
-    );
-
-    if(!window)
-    {
-        fprintf(stderr, "Error creating SDL Window.\n");
-        return false;
-    }
-
-    //Create SDL renderer
-    renderer = SDL_CreateRenderer(window, -1, 0);
-    if (!renderer)
-    {
-        fprintf(stderr, "Error Creating SDL Renderer.\n");
-        return false;
-    }
-
-    return true;
-}
 
 void setup(void) 
 {
+    //Allocate the required memory in bytes to hold the frame buffer
+    frame_buffer = (uint32_t*) malloc(sizeof(uint32_t) * window_width * window_height); //The cast here is not required, helps with porting between C and C++
 
+    //creating an SDL texture that is used to display the frame buffer
+    frame_buffer_texture = SDL_CreateTexture(
+        renderer,
+        SDL_PIXELFORMAT_ARGB8888,
+        SDL_TEXTUREACCESS_STREAMING,
+        window_width,
+        window_height
+    );
 }
 
 /*Where you handle input*/
@@ -77,11 +47,13 @@ void update(void)
 
 }
 
-
 void render(void)
 {
     SDL_SetRenderDrawColor(renderer, 0, 0, 255, 255);
     SDL_RenderClear(renderer);
+
+    render_frame_buffer();
+    clear_frame_buffer(0xFFFFFFFF);
 
     SDL_RenderPresent(renderer);
 }
@@ -98,6 +70,8 @@ int main(void){
         update();
         render();
     }
+
+    destroy_window();
 
 
     return 0;
