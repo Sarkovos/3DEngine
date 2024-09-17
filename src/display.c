@@ -1,4 +1,5 @@
 #include "display.h"
+#include <math.h>
 /*Display.c handles the SDL side of our engine*/
 
 //************************
@@ -10,9 +11,6 @@ uint32_t* frame_buffer = NULL;
 SDL_Texture* frame_buffer_texture = NULL;
 int window_width = 800;
 int window_height = 600;
-
-
-bool is_running = false;
 
 /*Initialize an SDL Window and verify it works properly*/
 bool initialize_window(void)
@@ -57,6 +55,68 @@ bool initialize_window(void)
     SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN);
 
     return true;
+}
+
+/*Draws pixel at x,y coordinate*/
+void draw_pixel(int x, int y, uint32_t color)
+{
+    if (x < window_width && y < window_height)
+    {
+        frame_buffer[(window_width * y) + x] = color;
+    }
+    
+}
+
+//DDA Algorithm
+void draw_line(int x0, int y0, int x1, int y1, uint32_t color) {
+    int delta_x = (x1 - x0);
+    int delta_y = (y1 - y0);
+
+    int longest_side_length = (abs(delta_x) >= abs(delta_y)) ? abs(delta_x) : abs(delta_y);
+
+    float x_inc = delta_x / (float)longest_side_length;
+    float y_inc = delta_y / (float)longest_side_length;
+
+    float current_x = x0;
+    float current_y = y0;
+
+    for (int i = 0; i <= longest_side_length; i++) {
+        draw_pixel(round(current_x), round(current_y), color);
+        current_x += x_inc;
+        current_y += y_inc;
+    }
+}
+
+//Bresenhams algorithm
+void bres_draw_line(int x0, int y0, int x1, int y1, uint32_t color)
+{
+
+    //calculate change in x and y
+    int dx = abs(x1 - x0); //always positive
+    int dy = -abs(y1 - y0); //always negative
+
+    int stepX = x0 < x1 ? 1 : -1; //Step x left or right
+    int stepY = y0 < y1 ? 1 : -1; //Step y left or right
+    int error = dx + dy; //start state for difference between dx and dy
+
+    while (x0 != x1 || y0 != y1)
+    {
+        draw_pixel(x0, y0, color);
+        int doubleError = 2 * error;
+        if (doubleError > dy)
+        {
+            error += dy;
+            x0 += stepX; //move x0 in the x direction setup in stepX
+        }
+        if (doubleError < dx)
+        {
+            error += dx;
+            y0 += stepY; //move y0 in the y direction setup in stepY
+        }
+
+        
+    }
+    draw_pixel(x1, y1, color);
 }
 
 /*Copy the contents of the frame buffer to the SDL texture to be displayed*/

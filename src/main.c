@@ -52,8 +52,11 @@ void render(void)
     SDL_SetRenderDrawColor(renderer, 0, 0, 255, 255);
     SDL_RenderClear(renderer);
 
+    //draw_pixel(20, 20, 0xFFFFFF00);
+    bres_draw_line(30, 30, 300, 300, 0xFFFF0000);
+
     render_frame_buffer();
-    clear_frame_buffer(0xFFFFFFFF);
+    clear_frame_buffer(0xFF000000);
 
     SDL_RenderPresent(renderer);
 }
