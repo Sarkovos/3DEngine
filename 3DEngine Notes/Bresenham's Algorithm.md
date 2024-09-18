@@ -3,7 +3,6 @@
 - This paper is called **Algorithm for computer control of a digital plotter**
 - The key point is that unlike DDA, Bresenham's algorithm has no floating point arithmetic, making it very cheap and efficient. 
 
-
 ### Basics:
 - The equation of a line is $y = mx + b$.
 	- $m$ is our slope, $\frac{\Delta y}{\Delta x}$.
@@ -47,7 +46,7 @@ $\Delta x(d_1 - d_2) = \Delta x(2\frac{\Delta y}{\Delta x}(x_k + 1) - 2y_k + 2b 
 $\Delta x(d_1 - d_2) = 2\Delta y(x_k + 1) - 2\Delta xy_k + 2\Delta x b - \Delta x$
 $\Delta x(d_1 - d_2) = 2\Delta yx_k - 2\Delta yx_k + 2\Delta y + 2\Delta x b - \Delta x$
 
-- Here, something nice happens. The last 3 terms remain constant, as they are not directly related to $x_K$ or $y_k$. Thus, we will ignore it and move forward with the rest, naming it $P_k$.
+- Here, something nice happens. The last 3 terms remain constant, as they are not directly related to $x_k$ or $y_k$. Thus, we will ignore it and move forward with the rest, naming it $P_k$. $P_k$ will act as our decision variable, sometimes referred to as the *error*.
 
 $P_k = 2\Delta yx_k - 2\Delta xy_k$
 
@@ -60,22 +59,26 @@ $P_{next} = 2\Delta yx_{next} - 2\Delta xy_{next}$
 $P_{next} - P_k = (2\Delta yx_{next} - 2\Delta xy_{next}) - (2\Delta yx_k - 2\Delta xy_k)$
 $P_{next} - P_k = 2\Delta y(x_{next} - x_k) - 2\Delta x(y_{next} - y_k)$
 
-- if $P_{next} - P_k < 0$, $P_{next} = P_k + 2\Delta y (x_k + 1 - x_k) - 2\Delta x(y_k - y_k)$
-- $(y_k - y_k)$ cancels out, and $(x_k - x_k)$ cancel out, leaving:
-- $P_{next} = P_k + 2\Delta y$
+- if $P_{next} - P_k < 0$ 
+	- $P_{next} = P_k + 2\Delta y (x_k + 1 - x_k) - 2\Delta x(y_k - y_k)$
+	- $(y_k - y_k)$ cancels out, and $(x_k - x_k)$ cancel out, leaving:
+	- $P_{next} = P_k + 2\Delta y$
 - In this case, $y_{next} = y_k$
 
-- if $P_{next} - P_k \geq 0$, $P_{next} = P_k + 2\Delta y - 2\Delta x$
+- if $P_{next} - P_k \geq 0$
+	- $P_{next} = P_k + 2\Delta y - 2\Delta x$
 - In this case, $y_{next} = y_k + 1$
 
 - Now we need to find our *initial value*
-
 $P_1 = 2\Delta yx_1 - 2\Delta yx_1 + 2\Delta y + 2\Delta x b - \Delta x$
 
 - Solving for b, we get $b = y_1 - mx_1$
 - Inserting b into our equation and solving, we get:
 
 $P_1 = 2\Delta y - \Delta x$
+
+- It should be noted that this algorithm, as laid out here, **only works for a specific octant**, the octant where the slope of our line is less than $45\degree$
+- There are implementations that work for all octants
 
 
 ### The Algorithm (Pseudo code)

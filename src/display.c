@@ -91,7 +91,7 @@ void draw_line(int x0, int y0, int x1, int y1, uint32_t color) {
 //As the algorithm plots in the x direction, error will increase in the positive
 //direction eventually making e2 greater than dx, where it will stop plotting in the
 //x irection. As it goes in the y direction, error will increment in the negative direction,
-//eventually making e2 less than dy.
+//eventually making e2 less than
 void bres_draw_line(int x0, int y0, int x1, int y1, uint32_t color)
 {
 
