@@ -7,9 +7,13 @@
 #include <stdlib.h>
 #include <math.h>
 
+#define FPS 30
+#define FRAME_TARGET_TIME (1000 / FPS) //How many miliseconds a frame should take
+
 //************************
 //Global Variables
 //************************
+
 
 extern SDL_Window* window;
 extern SDL_Renderer* renderer;
@@ -19,6 +23,9 @@ extern SDL_Texture* frame_buffer_texture;
 extern int window_width;
 extern int window_height;
 
+extern float aspect;
+extern float fov;
+
 bool initialize_window(void);
 void render_frame_buffer(void);
 void clear_frame_buffer (uint32_t color);
@@ -26,5 +33,6 @@ void destroy_window(void);
 void draw_pixel(int x, int y, uint32_t color);
 void draw_line(int x0, int y0, int x1, int y1, uint32_t color);
 void bres_draw_line(int x0, int y0, int x1, int y1, uint32_t color);
+void draw_triangle(int x0, int y0, int x1, int y1, int x2, int y2, uint32_t color);
 
 #endif

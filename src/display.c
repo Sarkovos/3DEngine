@@ -1,6 +1,7 @@
 #include "display.h"
 #include <math.h>
-/*Display.c handles the SDL side of our engine*/
+/*Display.c handles the SDL side of our engine, as well as other details like line drawing
+and pixel drawing*/
 
 //************************
 //Global Variables
@@ -29,7 +30,6 @@ bool initialize_window(void)
     window_width = display_mode.w;
     window_height = display_mode.h;
 
-    /*args: Title, xPos of window, yPos of window, width, height, flags*/
     window = SDL_CreateWindow(
         NULL,
         SDL_WINDOWPOS_CENTERED,
@@ -57,7 +57,7 @@ bool initialize_window(void)
     return true;
 }
 
-/*Draws pixel at x,y coordinate*/
+/*Draws pixel at x,y position in our frame buffer*/
 void draw_pixel(int x, int y, uint32_t color)
 {
     if (x < window_width && y < window_height)
@@ -121,6 +121,13 @@ void bres_draw_line(int x0, int y0, int x1, int y1, uint32_t color)
         
     }
     draw_pixel(x1, y1, color);
+}
+
+void draw_triangle(int x0, int y0, int x1, int y1, int x2, int y2, uint32_t color)
+{
+    bres_draw_line(x0, y0, x1, y1, color);
+    bres_draw_line(x1, y1, x2, y2, color);
+    bres_draw_line(x2, y2, x0, y0, color);
 }
 
 /*Copy the contents of the frame buffer to the SDL texture to be displayed*/

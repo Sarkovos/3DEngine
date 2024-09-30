@@ -37,14 +37,48 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Bresenham's Algorithm.md",
+                "file": "3D Engine Notes.md",
+                "mode": "source",
+                "source": false
+              }
+            }
+          },
+          {
+            "id": "6474494e994fcb82",
+            "type": "leaf",
+            "state": {
+              "type": "image",
+              "state": {
+                "file": "Pasted image 20240923215312 1.png"
+              }
+            }
+          },
+          {
+            "id": "8ebda3abb9278b26",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "Projection Matrix.md",
+                "mode": "source",
+                "source": false
+              }
+            }
+          },
+          {
+            "id": "401f41289cff9622",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "3D Engine Notes.md",
                 "mode": "source",
                 "source": false
               }
             }
           }
         ],
-        "currentTab": 2
+        "currentTab": 5
       }
     ],
     "direction": "vertical"
@@ -110,7 +144,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "Bresenham's Algorithm.md",
+                "file": "3D Engine Notes.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -127,7 +161,7 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "Bresenham's Algorithm.md",
+                "file": "3D Engine Notes.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               }
@@ -150,7 +184,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "Bresenham's Algorithm.md"
+                "file": "3D Engine Notes.md"
               }
             }
           },
@@ -181,13 +215,22 @@
       "table-editor-obsidian:Advanced Tables Toolbar": false
     }
   },
-  "active": "86e0ae96aa6ceeba",
+  "active": "401f41289cff9622",
   "lastOpenFiles": [
-    "DDA (Digital Differential analyzer).md",
+    "Projection Matrices.md",
+    "Projection Matrix.md",
+    "Pasted image 20240926144417.png",
+    "Pasted image 20240923215312 1.png",
+    "Pasted image 20240923215648.png",
+    "Pasted image 20240923215312.png",
+    "Pasted image 20240923220159.png",
+    "Pasted image 20240923221355.png",
+    "Pasted image 20240923221940.png",
+    "Pasted image 20240923222053.png",
+    "Pasted image 20240923220923.png",
+    "Pasted image 20240923220233.png",
+    "3D Engine Notes.md",
     "Bresenham's Algorithm.md",
-    "Pasted image 20240917003926.png",
-    "Pasted image 20240917003926 1.png",
-    "Pasted image 20240917005820.png",
-    "3D Engine Notes.md"
+    "DDA (Digital Differential analyzer).md"
   ]
 }
