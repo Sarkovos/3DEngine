@@ -147,6 +147,28 @@ mat4_t mat4_make_perspective_GL(float t, float b, float l, float r, float znear,
 
 }
 
+mat4_t mat4_make_orthographic(float t, float b, float l, float r, float znear, float zfar)
+{
+    /*
+    // |             2/r-l              0               0             -r+l/r-l 
+    // |                  0         2/t-b               0            -t+b/t-b                  
+    // |                  0             0          -2/f-n            -f+n/f-n
+    // |                  0             0               0                   1
+      */
+
+     mat4_t m = {{{ 0 }}};
+    m.m[0][0] = 2.0f / (r - l);
+    m.m[1][1] = 2.0f / (t - b);
+    m.m[2][2] = -2.0f / (zfar - znear);
+
+    m.m[0][3] = -(r + l) / (r - l);
+    m.m[1][3] = -(t + b) / (t - b);
+    m.m[2][3] = -(zfar + znear) / (zfar - znear);
+    m.m[3][3] = 1.0f;
+     return m;
+
+}
+
 vec4_t mat4_mul_vec4_project(mat4_t mat_proj, vec4_t v)
 {
     //multiply the projection matrix by our original vector
@@ -161,3 +183,4 @@ vec4_t mat4_mul_vec4_project(mat4_t mat_proj, vec4_t v)
     }
     return result;
 }
+

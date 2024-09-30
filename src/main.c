@@ -12,8 +12,9 @@
 /*Global variables*/
 mat4_t vertical_proj_matrix;
 mat4_t horizontal_proj_matrix;
+mat4_t orthographic_matrix;
 float fov_degrees = 60;
-float r, l, t, b, znear, zfar, fov, aspect;
+float r, l, t, b, znear, zfar, fov, aspect, ortho_height, ortho_width;
 
 triangle_t triangles_to_render[N_CUBE_FACES];
 
@@ -82,7 +83,10 @@ void setup(void)
     t = r / aspect;
     b = -t;
 
-    //Initialize projection matrices
+    ortho_height= 10.0; 
+    ortho_width = ortho_height * aspect;
+
+    //Initialize projection matrix
     vertical_proj_matrix = mat4_make_perspective(fov, aspect, znear, zfar);
     horizontal_proj_matrix = mat4_make_perspective_GL(t, b, l, r, znear, zfar);
 }
@@ -113,6 +117,16 @@ void process_input(void)
             if (event.key.keysym.sym == SDLK_8)
             {
                 projection_method = VERTICAL_PERSPECTIVE;
+            }
+
+            if (event.key.keysym.sym == SDLK_7)
+            {
+                l = -ortho_width / 2.0f;
+                r = ortho_width / 2.0f;
+                b = -ortho_height / 2.0f;
+                t = ortho_height / 2.0f;
+                orthographic_matrix = mat4_make_orthographic(t, b, l, r, znear, zfar);
+                projection_method = ORTHOGRAPHIC;
             }
 
             if (event.key.keysym.sym == SDLK_UP)
@@ -158,7 +172,7 @@ void update(void)
 
         mesh.rotation.x += 0.01;
         //mesh.rotation.y += 0.01;
-        //mesh.rotation.z += 0.01;
+        mesh.rotation.z += 0.02;
 
         //mesh.scale.x += 0.002;
         //mesh.scale.y += 0.01;
@@ -236,6 +250,24 @@ void update(void)
             {
                 //project the current vertex
                 projected_points[j] = mat4_mul_vec4_project(horizontal_proj_matrix, transformed_vertices[j]);
+
+                //scale into the view
+                projected_points[j].x *= (window_width / 2.0);
+                projected_points[j].y *= (window_height / 2.0);
+
+
+                //translate the projected points to the middle of the screen
+                projected_points[j].x += (window_width / 2.0);
+                projected_points[j].y += (window_height / 2.0);
+            }
+        }
+
+        if (projection_method == ORTHOGRAPHIC)
+        {
+            for (int j = 0; j < 3; j++)
+            {
+                //project the current vertex
+                projected_points[j] = mat4_mul_vec4(orthographic_matrix, transformed_vertices[j]);
 
                 //scale into the view
                 projected_points[j].x *= (window_width / 2.0);

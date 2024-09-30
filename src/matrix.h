@@ -17,6 +17,7 @@ mat4_t mat4_make_rotation_z(float angle);
 
 mat4_t mat4_make_perspective(float fov, float aspect, float znear, float zfar);
 mat4_t mat4_make_perspective_GL(float t, float b, float l, float r, float znear, float zfar);
+mat4_t mat4_make_orthographic(float t, float b, float l, float r, float znear, float zfar);
 vec4_t mat4_mul_vec4_project(mat4_t mat_proj, vec4_t v);
 
 vec4_t mat4_mul_vec4(mat4_t m, vec4_t v);
