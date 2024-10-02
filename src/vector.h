@@ -3,15 +3,12 @@
 
 typedef struct
 {
-    float x;
-    float y;
+    float x, y;
 } vec2_t;
 
 typedef struct
 {
-    float x;
-    float y;
-    float z;
+    float x, y, z;
 } vec3_t;
 
 typedef struct

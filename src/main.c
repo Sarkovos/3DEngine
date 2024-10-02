@@ -170,26 +170,26 @@ void update(void)
 
     previous_frame_time = SDL_GetTicks();
 
-        mesh.rotation.x += 0.01;
-        //mesh.rotation.y += 0.01;
-        mesh.rotation.z += 0.02;
+    mesh.rotation.x += 0.01;
+    //mesh.rotation.y += 0.01;
+    mesh.rotation.z += 0.02;
 
-        //mesh.scale.x += 0.002;
-        //mesh.scale.y += 0.01;
-        mesh.translation.z = 5.0;
-        //mesh.translation.x += 0.01;
-    
+    //mesh.scale.x += 0.002;
+    //mesh.scale.y += 0.01;
+    mesh.translation.z = 5.0;
+    //mesh.translation.x += 0.01;
 
-        //Create a scale matrix that will be used to multiply the mesh vertices
-        mat4_t scale_matrix = mat4_make_scale(mesh.scale.x, mesh.scale.y, mesh.scale.z);
 
-        //Create a translate matrix that will be used to multiply the mesh vertices
-        mat4_t translation_matrix = mat4_make_translation(mesh.translation.x, mesh.translation.y, mesh.translation.z);
+    //Create a scale matrix that will be used to multiply the mesh vertices
+    mat4_t scale_matrix = mat4_make_scale(mesh.scale.x, mesh.scale.y, mesh.scale.z);
 
-        //Create rotation matrices that will be used to multiply the mesh vertices
-        mat4_t rotation_matrix_x = mat4_make_rotation_x(mesh.rotation.x);
-        mat4_t rotation_matrix_y = mat4_make_rotation_y(mesh.rotation.y);
-        mat4_t rotation_matrix_z = mat4_make_rotation_z(mesh.rotation.z);
+    //Create a translate matrix that will be used to multiply the mesh vertices
+    mat4_t translation_matrix = mat4_make_translation(mesh.translation.x, mesh.translation.y, mesh.translation.z);
+
+    //Create rotation matrices that will be used to multiply the mesh vertices
+    mat4_t rotation_matrix_x = mat4_make_rotation_x(mesh.rotation.x);
+    mat4_t rotation_matrix_y = mat4_make_rotation_y(mesh.rotation.y);
+    mat4_t rotation_matrix_z = mat4_make_rotation_z(mesh.rotation.z);
 
     //loop all triangle faces of our cube
     for (int i = 0; i < N_CUBE_FACES; i++)
