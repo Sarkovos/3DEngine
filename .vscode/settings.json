@@ -1,0 +1,7 @@
+{
+    "files.associations": {
+        "random": "c",
+        "vector.h": "c",
+        "triangle.h": "c"
+    }
+}

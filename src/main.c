@@ -42,7 +42,6 @@ enum projection_method {
 } projection_method;
 
 
-
 /*Setup Functions to initialize variables and game objects*/
 void setup(void) 
 {
@@ -179,7 +178,6 @@ void update(void)
     mesh.translation.z = 5.0;
     //mesh.translation.x += 0.01;
 
-
     //Create a scale matrix that will be used to multiply the mesh vertices
     mat4_t scale_matrix = mat4_make_scale(mesh.scale.x, mesh.scale.y, mesh.scale.z);
 
@@ -299,16 +297,23 @@ void render(void)
     for (int i = 0; i < N_CUBE_FACES; i++)
     {
         triangle_t triangle = triangles_to_render[i];
+        
+        //Back face culling check
+        if (backface_cull_check(triangle.points[0], triangle.points[1], triangle.points[2]))
+        {
+            triangle_fill(triangle.points[0], triangle.points[1], triangle.points[2], 0xFF00FF00);
 
-        draw_triangle(
-            triangle.points[0].x,
-            triangle.points[0].y,
-            triangle.points[1].x,
-            triangle.points[1].y,
-            triangle.points[2].x,
-            triangle.points[2].y,
-            0xFF00FF00
-            );
+            draw_triangle(
+                triangle.points[0].x,
+                triangle.points[0].y,
+                triangle.points[1].x,
+                triangle.points[1].y,
+                triangle.points[2].x,
+                triangle.points[2].y,
+                0xFFFFFFFF
+                );
+        }
+       
             
     }
 

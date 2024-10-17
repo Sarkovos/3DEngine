@@ -6,7 +6,13 @@
 
 ### Coordinate System
 - We start with a *left handed coordinate system*
+- Our origin is in the top left of our screen, so y grows down
 
 
 ### 3D Models
-- Order of the vertices for faces are clockwise to determine the front face
+- Order of the vertices for faces are wound clockwise to determine the front face
+
+### Projections
+- We have 2 modes of projection, *perspective* and *orthographic*, with 2 forms of perspective projection.
+- There is one *horizontal FOV* implementation and one *vertical FOV* implementation of perspective projection.
+	- In one case, it only needs the FOV in radians and the aspect ratio. 
