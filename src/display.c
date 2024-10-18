@@ -11,7 +11,7 @@ SDL_Renderer* renderer = NULL;
 uint32_t* frame_buffer = NULL;
 SDL_Texture* frame_buffer_texture = NULL;
 int window_width = 800;
-int window_height = 600;
+int window_height = 800;
 
 /*Initialize an SDL Window and verify it works properly*/
 bool initialize_window(void)
@@ -24,11 +24,11 @@ bool initialize_window(void)
     }
 
     //USe SDL to query what is the fullscreen max width and height
-    SDL_DisplayMode display_mode;
-    SDL_GetCurrentDisplayMode(0, &display_mode);
+    // SDL_DisplayMode display_mode;
+    // SDL_GetCurrentDisplayMode(0, &display_mode);
 
-    window_width = display_mode.w;
-    window_height = display_mode.h;
+    // window_width = display_mode.w;
+    // window_height = display_mode.h;
 
     window = SDL_CreateWindow(
         NULL,
@@ -36,7 +36,7 @@ bool initialize_window(void)
         SDL_WINDOWPOS_CENTERED,
         window_width,
         window_height,
-        SDL_WINDOW_BORDERLESS
+        0
     );
 
     if(!window)
@@ -52,7 +52,7 @@ bool initialize_window(void)
         fprintf(stderr, "Error Creating SDL Renderer.\n");
         return false;
     }
-    SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN);
+    //SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN);
 
     return true;
 }

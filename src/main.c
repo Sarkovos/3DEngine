@@ -169,9 +169,9 @@ void update(void)
 
     previous_frame_time = SDL_GetTicks();
 
-    mesh.rotation.x += 0.01;
-    //mesh.rotation.y += 0.01;
-    mesh.rotation.z += 0.02;
+    //mesh.rotation.x += 0.01;
+    mesh.rotation.y += 0.01;
+    //mesh.rotation.z += 0.02;
 
     //mesh.scale.x += 0.002;
     //mesh.scale.y += 0.01;
@@ -292,13 +292,17 @@ void update(void)
     }
 }
 
+
+
+
 void render(void)
 {
+
     for (int i = 0; i < N_CUBE_FACES; i++)
     {
         triangle_t triangle = triangles_to_render[i];
-        
-        //Back face culling check
+
+        // Back face culling check
         if (backface_cull_check(triangle.points[0], triangle.points[1], triangle.points[2]))
         {
             triangle_fill(triangle.points[0], triangle.points[1], triangle.points[2], 0xFF00FF00);
@@ -312,6 +316,7 @@ void render(void)
                 triangle.points[2].y,
                 0xFFFFFFFF
                 );
+
         }
        
             
@@ -321,6 +326,7 @@ void render(void)
     clear_frame_buffer(0xFF000000);
 
     SDL_RenderPresent(renderer);
+
 }
 
 int main(void){
