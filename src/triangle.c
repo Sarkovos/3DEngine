@@ -27,7 +27,7 @@ void triangle_fill(vec2_t v0, vec2_t v1, vec2_t v2, uint32_t color)
             int w1 = edge_cross(&v2, &v0, &p);
             int w2 = edge_cross(&v0, &v1, &p);
 
-            bool is_inside = w0 <= 0 && w1 <= 0 && w2 <= 0;
+            bool is_inside = w0 >= 0 && w1 >= 0 && w2 >= 0;
             if (is_inside)
             {
                 draw_pixel(x, y, color);
@@ -37,7 +37,7 @@ void triangle_fill(vec2_t v0, vec2_t v1, vec2_t v2, uint32_t color)
     }
 }
 
-// in a left handed, clockwise, y increase downward system, cross product sign is negative
+// in a left handed, counterclockwise, y increase downward system, cross product sign is positive
 bool backface_cull_check (vec2_t v0, vec2_t v1, vec2_t v2)
 {
     vec2_t edge1;
@@ -53,5 +53,5 @@ bool backface_cull_check (vec2_t v0, vec2_t v1, vec2_t v2)
     float cross = edge1.x * edge2.y - edge1.y * edge2.x;
 
     
-    return (cross < 0);
+    return (cross > 0);
 } 

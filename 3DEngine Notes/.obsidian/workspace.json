@@ -18,69 +18,8 @@
                 "source": false
               }
             }
-          },
-          {
-            "id": "75d27b21eacbaf1f",
-            "type": "leaf",
-            "state": {
-              "type": "markdown",
-              "state": {
-                "file": "Bresenham's Algorithm.md",
-                "mode": "source",
-                "source": false
-              }
-            }
-          },
-          {
-            "id": "86e0ae96aa6ceeba",
-            "type": "leaf",
-            "state": {
-              "type": "markdown",
-              "state": {
-                "file": "3D Engine Notes.md",
-                "mode": "source",
-                "source": false
-              }
-            }
-          },
-          {
-            "id": "401f41289cff9622",
-            "type": "leaf",
-            "state": {
-              "type": "markdown",
-              "state": {
-                "file": "Bresenham's Algorithm.md",
-                "mode": "source",
-                "source": false
-              }
-            }
-          },
-          {
-            "id": "ca1507c20f6a2e7d",
-            "type": "leaf",
-            "state": {
-              "type": "markdown",
-              "state": {
-                "file": "Terms.md",
-                "mode": "source",
-                "source": false
-              }
-            }
-          },
-          {
-            "id": "cf9a0ce8aa20a196",
-            "type": "leaf",
-            "state": {
-              "type": "markdown",
-              "state": {
-                "file": "Rasterization.md",
-                "mode": "source",
-                "source": false
-              }
-            }
           }
-        ],
-        "currentTab": 5
+        ]
       }
     ],
     "direction": "vertical"
@@ -130,7 +69,8 @@
       }
     ],
     "direction": "horizontal",
-    "width": 300
+    "width": 200,
+    "collapsed": true
   },
   "right": {
     "id": "2ec0fa7891735023",
@@ -146,7 +86,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "Rasterization.md",
+                "file": "3D Engine Notes.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -163,7 +103,7 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "Rasterization.md",
+                "file": "3D Engine Notes.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               }
@@ -186,7 +126,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "Rasterization.md"
+                "file": "3D Engine Notes.md"
               }
             }
           },
@@ -217,25 +157,25 @@
       "table-editor-obsidian:Advanced Tables Toolbar": false
     }
   },
-  "active": "cf9a0ce8aa20a196",
+  "active": "8271fb6f82d5c135",
   "lastOpenFiles": [
-    "3D Engine Notes.md",
-    "Rasterization.md",
+    "Pasted image 20240917003926.png",
     "Terms.md",
-    "Images",
-    "Bresenham's Algorithm.md",
-    "DDA (Digital Differential analyzer).md",
-    "Images/Pasted image 20240917003926.png",
+    "Rasterization.md",
     "Images/Pasted image 20240917005820.png",
-    "Pasted image 20240923215312.png",
+    "Images/Pasted image 20240917003926.png",
+    "Images",
     "Pasted image 20240923215312 1.png",
-    "Pasted image 20240923215648.png",
-    "Pasted image 20240923220159.png",
-    "Pasted image 20240923220233.png",
-    "Pasted image 20240923220923.png",
-    "Pasted image 20240923221355.png",
-    "Pasted image 20240923221940.png",
+    "DDA (Digital Differential analyzer).md",
+    "Projection Matrix.md",
     "Projection Matrices.md",
-    "Projection Matrix.md"
+    "Pasted image 20240926144417.png",
+    "Pasted image 20240923222053.png",
+    "Pasted image 20240923221940.png",
+    "Pasted image 20240923221355.png",
+    "Pasted image 20240923220923.png",
+    "Pasted image 20240923220233.png",
+    "Bresenham's Algorithm.md",
+    "3D Engine Notes.md"
   ]
 }
