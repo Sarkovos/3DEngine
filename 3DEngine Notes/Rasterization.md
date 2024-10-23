@@ -21,3 +21,19 @@
 
 #### Fill Convention
 - Top-Left Rule: A pixel center is defined to lie inside of a triangle if it lies on a flat top edge or a left edge of a triangle
+- In a counter-clockwise triangle, a top edge is an edge that is exactly horizontal and goes towards the left, i.e. its end point is left of its start point.
+- In a counter-clockwise triangle, a left edge is an edge that goes down, i.e. its end point is strictly below its start point.
+- If our sample point actually falls inside the triangle (not on an edge), we draw it no matter what. It if happens to fall on an edge, we draw it if and only if that edge happens to be a top or a left edge.
+- To implement this, we add a test to check for the rule. If it passes, the pixel is drawn as is. If it fails, we use a bias variable to shift this value of the cross product for that edge by -1. This way, if that point is directly on the edge of the triangle, and fails the top-left test, it will not be drawn
+
+#### Barycentric Coordinates
+- $p = (\alpha, \beta, \gamma)$
+- $\alpha + \beta + \gamma = 1.0$
+- $p = \alpha v_0 + \beta v_1 + \gamma v_2$
+
+![[Pasted image 20241022212808.png]]
+- $\alpha = \frac{\|v_1v_2\times v_1p\|}{\|v_0v_1\times v_0v_2\|}$
+- ![[Pasted image 20241022212830.png]]
+- $\beta = \frac{\|v_2v_0\times v_2p\|}{\|v_0v_1\times v_0v_2\|}$
+- ![[Pasted image 20241022212842.png]]
+- $\gamma = \frac{\|v_0v_1\times v_0p\|}{\|v_0v_1\times v_0v_2\|}$

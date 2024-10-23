@@ -46,7 +46,7 @@ enum projection_method {
 void setup(void) 
 {
     //Initialze render mode and triangle culling method
-    //render_method = RENDER_WIRE;
+    render_method = RENDER_FILL_TRIANGLE_WIRE;
     //cull_method = CULL_BACKFACE;
     projection_method = VERTICAL_PERSPECTIVE;
 
@@ -106,6 +106,20 @@ void process_input(void)
             {
                 is_running = false;
                 break;
+            }
+            if (event.key.keysym.sym == SDLK_1)
+            {
+                render_method = RENDER_FILL_TRIANGLE_WIRE;
+            }
+
+            if (event.key.keysym.sym == SDLK_2)
+            {
+                render_method = RENDER_FILL_TRIANGLE;
+            }
+
+            if (event.key.keysym.sym == SDLK_3)
+            {
+                render_method = RENDER_WIRE;
             }
 
             if (event.key.keysym.sym == SDLK_9)
@@ -231,14 +245,9 @@ void update(void)
                 //project the current vertex
                 projected_points[j] = mat4_mul_vec4_project(vertical_proj_matrix, transformed_vertices[j]);
 
-                //scale into the view
-                projected_points[j].x *= (window_width / 2.0);
-                projected_points[j].y *= (window_height / 2.0);
-
-
                 //translate the projected points to the middle of the screen
-                projected_points[j].x += (window_width / 2.0);
-                projected_points[j].y += (window_height / 2.0);
+                projected_points[j].x = ((projected_points[j].x + 1.0f) / 2.0f) * window_width;
+                projected_points[j].y = ((projected_points[j].y + 1.0f) / 2.0f) * window_height;
             }
         }
 
@@ -249,17 +258,9 @@ void update(void)
                 //project the current vertex
                 projected_points[j] = mat4_mul_vec4_project(horizontal_proj_matrix, transformed_vertices[j]);
 
-                // Flip vertically since the y values of the 3D mesh grow bottom->up and in screen space y values grow top->down
-                projected_points[j].y *= -1;
-
-                //scale into the view
-                projected_points[j].x *= (window_width / 2.0);
-                projected_points[j].y *= (window_height / 2.0);
-
-
                 //translate the projected points to the middle of the screen
-                projected_points[j].x += (window_width / 2.0);
-                projected_points[j].y += (window_height / 2.0);
+                projected_points[j].x = ((projected_points[j].x + 1.0f) / 2.0f) * window_width;
+                projected_points[j].y = ((projected_points[j].y + 1.0f) / 2.0f) * window_height;
             }
         }
 
@@ -270,14 +271,9 @@ void update(void)
                 //project the current vertex
                 projected_points[j] = mat4_mul_vec4(orthographic_matrix, transformed_vertices[j]);
 
-                //scale into the view
-                projected_points[j].x *= (window_width / 2.0);
-                projected_points[j].y *= (window_height / 2.0);
-
-
                 //translate the projected points to the middle of the screen
-                projected_points[j].x += (window_width / 2.0);
-                projected_points[j].y += (window_height / 2.0);
+                projected_points[j].x = ((projected_points[j].x + 1.0f) / 2.0f) * window_width;
+                projected_points[j].y = ((projected_points[j].y + 1.0f) / 2.0f) * window_height;
             }
         }
 
@@ -305,12 +301,23 @@ void render(void)
     {
         triangle_t triangle = triangles_to_render[i];
 
-        // Back face culling check
+        // COLORS FOR TESTING BARYCENTRIC COORDS
+        triangle.point_colors[0] = (color_t){ .a = 0xFF, .r = 0xFF, .g = 0x00, .b = 0x00 };  // Red
+        triangle.point_colors[1] = (color_t){ .a = 0xFF, .r = 0x00, .g = 0xFF, .b = 0x00 };  // Green
+        triangle.point_colors[2] = (color_t){ .a = 0xFF, .r = 0x00, .g = 0x00, .b = 0xFF };  // Blue
+
+        // Back face culling check, renders if it FAILS, doesnt render if it passes
         if (backface_cull_check(triangle.points[0], triangle.points[1], triangle.points[2]))
         {
-            triangle_fill(triangle.points[0], triangle.points[1], triangle.points[2], 0xFF00FF00);
+            if (render_method == RENDER_FILL_TRIANGLE)
+            {
+                triangle_fill(triangle.points[0], triangle.points[1], triangle.points[2], triangle.point_colors);
+            }
 
-            draw_triangle(
+
+            if (render_method == RENDER_WIRE)
+            {
+                draw_triangle(
                 triangle.points[0].x,
                 triangle.points[0].y,
                 triangle.points[1].x,
@@ -319,6 +326,22 @@ void render(void)
                 triangle.points[2].y,
                 0xFFFFFFFF
                 );
+            }
+
+            if (render_method == RENDER_FILL_TRIANGLE_WIRE)
+            {
+                triangle_fill(triangle.points[0], triangle.points[1], triangle.points[2], triangle.point_colors);
+                draw_triangle(
+                triangle.points[0].x,
+                triangle.points[0].y,
+                triangle.points[1].x,
+                triangle.points[1].y,
+                triangle.points[2].x,
+                triangle.points[2].y,
+                0xFFFFFFFF
+                );
+            }
+           
 
         }
        

@@ -60,9 +60,14 @@ bool initialize_window(void)
 /*Draws pixel at x,y position in our frame buffer*/
 void draw_pixel(int x, int y, uint32_t color)
 {
-    if (x < window_width && y < window_height)
+
+    // Invert the y-coordinate for top-left origin systems
+    // places points with y = 0 at the bottom of the screen
+    
+    int screen_y = window_height - y - 1;
+    if (x < window_width && screen_y < window_height)
     {
-        frame_buffer[(window_width * y) + x] = color;
+        frame_buffer[(window_width * screen_y) + x] = color;
     }
     
 }
