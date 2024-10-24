@@ -36,7 +36,7 @@ bool initialize_window(void)
         SDL_WINDOWPOS_CENTERED,
         window_width,
         window_height,
-        0
+        SDL_WINDOW_RESIZABLE  
     );
 
     if(!window)
@@ -163,7 +163,6 @@ void clear_frame_buffer (uint32_t color)
 /*Free all memory*/
 void destroy_window(void)
 {
-    free(frame_buffer);
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();

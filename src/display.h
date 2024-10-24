@@ -14,7 +14,6 @@
 //Global Variables
 //************************
 
-
 extern SDL_Window* window;
 extern SDL_Renderer* renderer;
 extern uint32_t* frame_buffer;

@@ -1,7 +1,7 @@
 #include "triangle.h"
 
 
-int edge_cross(vec2_t* a, vec2_t* b, vec2_t* p)
+float edge_cross(vec2_t* a, vec2_t* b, vec2_t* p)
 {
     vec2_t ab = { b->x - a->x, b->y - a->y };
     vec2_t ap = { p->x - a->x, p->y - a->y };
@@ -12,14 +12,14 @@ int edge_cross(vec2_t* a, vec2_t* b, vec2_t* p)
 void triangle_fill(vec2_t v0, vec2_t v1, vec2_t v2, color_t vertexColors[3])
 {
     // Find the bounding box with all canidate pixels
-    int x_min = fmin(fmin(v0.x, v1.x), v2.x);
-    int y_min = fmin(fmin(v0.y, v1.y), v2.y);
-    int x_max = fmax(fmax(v0.x, v1.x), v2.x);
-    int y_max = fmax(fmax(v0.y, v1.y), v2.y);
+    int x_min = floor(fmin(fmin(v0.x, v1.x), v2.x));
+    int y_min = floor(fmin(fmin(v0.y, v1.y), v2.y));
+    int x_max = ceil(fmax(fmax(v0.x, v1.x), v2.x));
+    int y_max = ceil(fmax(fmax(v0.y, v1.y), v2.y));
 
-    int bias0 = is_top_left(&v1, &v2) ? 0 : -1;
-    int bias1 = is_top_left(&v2, &v0) ? 0 : -1;
-    int bias2 = is_top_left(&v0, &v1) ? 0 : -1;
+    float bias0 = is_top_left(&v1, &v2) ? 0 : -1;
+    float bias1 = is_top_left(&v2, &v0) ? 0 : -1;
+    float bias2 = is_top_left(&v0, &v1) ? 0 : -1;
 
     // Find the area of the entire triangle/parallelogram
     float area = edge_cross(&v0, &v1, &v2);
@@ -35,9 +35,9 @@ void triangle_fill(vec2_t v0, vec2_t v1, vec2_t v2, color_t vertexColors[3])
 
             // check if the edges and the point all have a positive cross product
             // if all cross products are positive, this point is within the triangle
-            int w0 = edge_cross(&v1, &v2, &p) + bias0;
-            int w1 = edge_cross(&v2, &v0, &p) + bias1;
-            int w2 = edge_cross(&v0, &v1, &p) + bias2;
+            float w0 = edge_cross(&v1, &v2, &p) + bias0;
+            float w1 = edge_cross(&v2, &v0, &p) + bias1;
+            float w2 = edge_cross(&v0, &v1, &p) + bias2;
 
             bool is_inside = w0 >= 0 && w1 >= 0 && w2 >= 0;
             if (is_inside)
