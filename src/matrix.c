@@ -1,6 +1,19 @@
 #include <math.h>
 #include "matrix.h"
 
+
+mat3_t mat3x3_identity(void)
+{
+	mat3_t m =
+	{ {
+		{1, 0, 0},
+		{0, 1, 0},
+		{0, 0, 1}
+	} };
+
+	return m;
+}
+
 mat4_t mat4_identity(void) {
     // | 1 0 0 0 |
     // | 0 1 0 0 |
@@ -183,4 +196,86 @@ vec4_t mat4_mul_vec4_project(mat4_t mat_proj, vec4_t v)
     }
     return result;
 }
+
+mat4_t mat4_transpose(mat4_t m) {
+    mat4_t result;
+    for (int i = 0; i < 4; i++) {
+        for (int j = 0; j < 4; j++) {
+            result.m[i][j] = m.m[j][i];
+        }
+    }
+    return result;
+}
+
+// Function to calculate the inverse of a 4x4 matrix
+mat4_t inverse4x4(mat4_t mat)
+{
+	mat4_t result = mat4_identity();
+
+	// Calculate the determinant of the input matrix
+	float det = mat.m[0][0] * cofactor(mat, 0, 0) +
+		mat.m[0][1] * cofactor(mat, 0, 1) +
+		mat.m[0][2] * cofactor(mat, 0, 2) +
+		mat.m[0][3] * cofactor(mat, 0, 3);
+
+	// Check if the determinant is zero (matrix is singular)
+	if (det == 0.0f) {
+		// Handle the error (e.g., print an error message or return an identity matrix)
+		printf("Error: Singular matrix, inverse does not exist.\n");
+		// Returning an identity matrix for simplicity; you might want to handle errors differently
+		return result;
+	}
+
+	// Calculate the inverse by dividing the adjugate by the determinant
+	float invDet = 1.0f / det;
+
+	for (int i = 0; i < 4; ++i) {
+		for (int j = 0; j < 4; ++j) {
+			result.m[i][j] = adjugate4x4(mat).m[i][j] * invDet;
+		}
+	}
+
+	return result;
+}
+
+mat4_t adjugate4x4(mat4_t mat)
+{
+	mat4_t result;
+
+	for (int i = 0; i < 4; ++i)
+	{
+		for (int j = 0; j < 4; ++j)
+		{
+			// Calculate the cofactor and transpose it to get the adjugate
+			result.m[j][i] = cofactor(mat, i, j);
+		}
+	}
+
+	return result;
+}
+
+float cofactor(mat4_t mat, int row, int col)
+{
+	int sign = ((row + col) & 2) == 0 ? 1 : -1;
+
+	mat3_t mat3x3 =
+	{ {
+		{mat.m[(row + 1) % 4][(col + 1) % 4], mat.m[(row + 1) % 4][(col + 2) % 4], mat.m[(row + 1) % 4][(col + 3) % 4]},
+		{mat.m[(row + 2) % 4][(col + 1) % 4], mat.m[(row + 2) % 4][(col + 2) % 4], mat.m[(row + 2) % 4][(col + 3) % 4]},
+		{mat.m[(row + 3) % 4][(col + 1) % 4], mat.m[(row + 3) % 4][(col + 2) % 4], mat.m[(row + 3) % 4][(col + 3) % 4]}
+	} };
+
+	float determinant = determinant3x3(mat3x3);
+
+	return sign * determinant;
+}
+
+// Function to calculate the determinant of a 3x3 matrix
+float determinant3x3(mat3_t mat)
+{
+	return mat.m[0][0] * (mat.m[1][1] * mat.m[2][2] - mat.m[1][2] * mat.m[2][1]) -
+		mat.m[0][1] * (mat.m[1][0] * mat.m[2][2] - mat.m[1][2] * mat.m[2][0]) +
+		mat.m[0][2] * (mat.m[1][0] * mat.m[2][1] - mat.m[1][1] * mat.m[2][0]);
+}
+
 

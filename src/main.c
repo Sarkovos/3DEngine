@@ -9,6 +9,7 @@
 #include "mesh.h"
 #include "matrix.h"
 #include "array.h"
+#include "light.h"
 
 /*Global variables*/
 mat4_t vertical_proj_matrix;
@@ -221,6 +222,18 @@ void update(void)
     mat4_t rotation_matrix_y = mat4_make_rotation_y(mesh.rotation.y);
     mat4_t rotation_matrix_z = mat4_make_rotation_z(mesh.rotation.z);
 
+    // Compute the World Matrix by combining scale, rotation, and translation matrices
+    mat4_t world_matrix = mat4_identity();
+    world_matrix = mat4_mul_mat4(scale_matrix, world_matrix);
+    world_matrix = mat4_mul_mat4(rotation_matrix_z, world_matrix);
+    world_matrix = mat4_mul_mat4(rotation_matrix_y, world_matrix);
+    world_matrix = mat4_mul_mat4(rotation_matrix_x, world_matrix);
+    world_matrix = mat4_mul_mat4(translation_matrix, world_matrix);
+
+     // **Compute the Normal Matrix (inverse transpose of the world matrix)**
+    mat4_t normal_matrix = inverse4x4(world_matrix);     // Compute inverse of world matrix
+    normal_matrix = mat4_transpose(normal_matrix);         // Transpose the inverse to get the normal matrix
+
     //loop all triangle faces of our mesh
     int num_faces = array_length(mesh.faces);
     for (int i = 0; i < num_faces; i++)
@@ -232,28 +245,42 @@ void update(void)
         face_vertices[1] = mesh.vertices[mesh_face.b - 1];
         face_vertices[2] = mesh.vertices[mesh_face.c - 1];
 
+        vec3_t face_normals[3];
+        face_normals[0] = mesh.normals[mesh_face.normal_a - 1];
+        face_normals[1] = mesh.normals[mesh_face.normal_b - 1];
+        face_normals[2] = mesh.normals[mesh_face.normal_c - 1];
+
         vec4_t transformed_vertices[3];
+        vec3_t transformed_normals[3];
+        color_t vertex_colors[3];
 
         // loop all three vertices of this current face and apply transformations
         for (int j = 0; j < 3; j++)
         {
             vec4_t transformed_vertex = vec4_from_vec3(face_vertices[j]);
 
-            // create a world matrix combining scale, rotation, and translation matrices
-            mat4_t world_matrix = mat4_identity();
-            world_matrix = mat4_mul_mat4(scale_matrix, world_matrix);
-
-            world_matrix = mat4_mul_mat4(rotation_matrix_z, world_matrix);
-            world_matrix = mat4_mul_mat4(rotation_matrix_y, world_matrix);
-            world_matrix = mat4_mul_mat4(rotation_matrix_x, world_matrix);
-
-            world_matrix = mat4_mul_mat4(translation_matrix, world_matrix);
-
             // multiply the world matrix by the original vector
             transformed_vertex = mat4_mul_vec4(world_matrix, transformed_vertex);
 
             //save transformed vertex in the array of transformed vertices
             transformed_vertices[j] = transformed_vertex;
+
+            // transform the vertex normal
+            vec4_t normal = { face_normals[j].x, face_normals[j].y, face_normals[j].z, 0.0f };
+            normal = mat4_mul_vec4(normal_matrix, normal);
+            transformed_normals[j] = vec3_from_vec4(normal);
+            vec3_normalize(&transformed_normals[j]);
+
+            vec3_normalize(&light.direction);
+
+            // Compute lighting at the vertex
+            float light_intensity = vec3_dot(transformed_normals[j], light.direction);
+            light_intensity = fmaxf(0.0f, fminf(1.0f, light_intensity));
+
+            // Apply light intensity to base color
+            color_t base_color = (color_t){ .a = 0xFF, .r = 0xFF, .g = 0xFF, .b = 0xFF }; // White color
+            vertex_colors[j] = light_apply_intensity_color(base_color, light_intensity);
+
         }
 
         vec4_t projected_points[3];
@@ -297,12 +324,47 @@ void update(void)
             }
         }
 
+        // MAJOR NOTE TO SELF: THIS IS JUST DOING CROSS PRODUCT STUFF AGAIN
+        // WE SHOULD REALLY CHANGE IT BUT IF YOU SEE THIS ON GITHUB OR SOMETHING
+        // KNOW THAT I AM A BIT DUMB
+        // Get individual vectors from A, B, and C vertices to compute normal
+        vec3_t vector_a = vec3_from_vec4(transformed_vertices[0]); /*   A   */
+        vec3_t vector_b = vec3_from_vec4(transformed_vertices[1]); /*  / \  */
+        vec3_t vector_c = vec3_from_vec4(transformed_vertices[2]); /* C---B */
+
+        // Get the vector subtraction of B-A and C-A
+        vec3_t vector_ab = vec3_sub(vector_b, vector_a);
+        vec3_t vector_ac = vec3_sub(vector_c, vector_a);
+        vec3_normalize(&vector_ab);
+        vec3_normalize(&vector_ac);
+
+        // Compute the face normal (using cross product to find perpendicular)
+        vec3_t normal = vec3_cross(vector_ab, vector_ac);
+        vec3_normalize(&normal);
+
+
+        // calculate the shade intensity based on how aligned is the face normal and the light ray
+        float light_intensity_factor = vec3_dot(normal, light.direction);
+
+        // THIS WAS A FUNCTION USED FOR FLAT SHADING
+        // calculate the triangle color based on the light angle
+        uint32_t triangle_color = light_apply_intensity(mesh_face.color, light_intensity_factor);
+        
+
+         // **Create the triangle with per-vertex colors**
         triangle_t projected_triangle = {
             .points = {
-                {projected_points[0].x, projected_points[0].y },
-                {projected_points[1].x, projected_points[1].y },
-                {projected_points[2].x, projected_points[2].y }
-            }};
+                { projected_points[0].x, projected_points[0].y },
+                { projected_points[1].x, projected_points[1].y },
+                { projected_points[2].x, projected_points[2].y },
+            },
+            .point_colors = {
+                vertex_colors[0],
+                vertex_colors[1],
+                vertex_colors[2],
+            },
+            .color = triangle_color // Not used when using per-vertex colors
+        };
 
         //Save the projected triangle in the array of triangles to render
         //These are the triangles that are sent to the render function
@@ -324,16 +386,15 @@ void render(void)
         triangle_t triangle = triangles_to_render[i];
 
         // COLORS FOR TESTING BARYCENTRIC COORDS
-        triangle.point_colors[0] = (color_t){ .a = 0xFF, .r = 0xFF, .g = 0x00, .b = 0x00 };  // Red
-        triangle.point_colors[1] = (color_t){ .a = 0xFF, .r = 0x00, .g = 0xFF, .b = 0x00 };  // Green
-        triangle.point_colors[2] = (color_t){ .a = 0xFF, .r = 0x00, .g = 0x00, .b = 0xFF };  // Blue
+        // triangle.point_colors[0] = (color_t){ .a = 0xFF, .r = 0xFF, .g = 0x00, .b = 0x00 };  // Red
+        // triangle.point_colors[1] = (color_t){ .a = 0xFF, .r = 0x00, .g = 0xFF, .b = 0x00 };  // Green
+        // triangle.point_colors[2] = (color_t){ .a = 0xFF, .r = 0x00, .g = 0x00, .b = 0xFF };  // Blue
 
-        // Back face culling check, renders if it FAILS, doesnt render if it passes
         if (backface_cull_check(triangle.points[0], triangle.points[1], triangle.points[2]))
         {
             if (render_method == RENDER_FILL_TRIANGLE)
             {
-                triangle_fill(triangle.points[0], triangle.points[1], triangle.points[2], triangle.point_colors);
+                triangle_fill(triangle.points[0], triangle.points[1], triangle.points[2], triangle.color);
             }
 
             if (render_method == RENDER_WIRE)
@@ -351,7 +412,7 @@ void render(void)
 
             if (render_method == RENDER_FILL_TRIANGLE_WIRE)
             {
-                triangle_fill(triangle.points[0], triangle.points[1], triangle.points[2], triangle.point_colors);
+                triangle_fill(triangle.points[0], triangle.points[1], triangle.points[2], triangle.color);
                 draw_triangle(
                 triangle.points[0].x,
                 triangle.points[0].y,
@@ -363,6 +424,8 @@ void render(void)
                 );
             }
         }
+
+        // TODO: MAKE RENDER METHOD FOR BARYCENTRIC COORDINATES
             
     }
 
@@ -378,6 +441,7 @@ void free_resources(void)
 {
     array_free(mesh.faces);
     array_free(mesh.vertices);
+    array_free(mesh.normals);
     free(frame_buffer);
     free(triangles_to_render);
 }

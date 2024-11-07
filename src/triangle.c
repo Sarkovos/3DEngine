@@ -9,7 +9,7 @@ float edge_cross(vec2_t* a, vec2_t* b, vec2_t* p)
     return ab.x * ap.y - ab.y * ap.x;
 
 }
-void triangle_fill(vec2_t v0, vec2_t v1, vec2_t v2, color_t vertexColors[3])
+void triangle_fill(vec2_t v0, vec2_t v1, vec2_t v2, uint32_t color)
 {
     // Find the bounding box with all canidate pixels
     int x_min = floor(fmin(fmin(v0.x, v1.x), v2.x));
@@ -17,9 +17,45 @@ void triangle_fill(vec2_t v0, vec2_t v1, vec2_t v2, color_t vertexColors[3])
     int x_max = ceil(fmax(fmax(v0.x, v1.x), v2.x));
     int y_max = ceil(fmax(fmax(v0.y, v1.y), v2.y));
 
-    float bias0 = is_top_left(&v1, &v2) ? 0 : -1;
-    float bias1 = is_top_left(&v2, &v0) ? 0 : -1;
-    float bias2 = is_top_left(&v0, &v1) ? 0 : -1;
+    float bias0 = is_top_left(&v1, &v2) ? 0 : -0.0001;
+    float bias1 = is_top_left(&v2, &v0) ? 0 : -0.0001;
+    float bias2 = is_top_left(&v0, &v1) ? 0 : -0.0001;
+
+    // loop all canidate pixels inside the bounding box
+    for (int y = y_min; y <= y_max; y++)
+    {
+        for (int x = x_min; x <= x_max; x++)
+        {
+            vec2_t p = {x, y};
+
+            // check if the edges and the point all have a positive cross product
+            // if all cross products are positive, this point is within the triangle
+            float w0 = edge_cross(&v1, &v2, &p) + bias0;
+            float w1 = edge_cross(&v2, &v0, &p) + bias1;
+            float w2 = edge_cross(&v0, &v1, &p) + bias2;
+
+            bool is_inside = w0 >= 0 && w1 >= 0 && w2 >= 0;
+            if (is_inside)
+            {
+
+                draw_pixel(x, y, color);
+            }
+            
+        }
+    }
+}
+
+void triangle_fill_barycentric(vec2_t v0, vec2_t v1, vec2_t v2, color_t vertexColors[3])
+{
+    // Find the bounding box with all canidate pixels
+    int x_min = floor(fmin(fmin(v0.x, v1.x), v2.x));
+    int y_min = floor(fmin(fmin(v0.y, v1.y), v2.y));
+    int x_max = ceil(fmax(fmax(v0.x, v1.x), v2.x));
+    int y_max = ceil(fmax(fmax(v0.y, v1.y), v2.y));
+
+    float bias0 = is_top_left(&v1, &v2) ? 0 : -0.0001;
+    float bias1 = is_top_left(&v2, &v0) ? 0 : -0.0001;
+    float bias2 = is_top_left(&v0, &v1) ? 0 : -0.0001;
 
     // Find the area of the entire triangle/parallelogram
     float area = edge_cross(&v0, &v1, &v2);

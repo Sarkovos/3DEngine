@@ -96,6 +96,13 @@ void load_obj_file_data(char* filename)
             array_push(mesh.vertices, vertex);
         }
 
+        if (strncmp(line, "vn ", 3) == 0) 
+        {
+            vec3_t normal;
+            sscanf(line, "vn %f %f %f", &normal.x, &normal.y, &normal.z);
+            array_push(mesh.normals, normal);
+        }
+
         // face information
         if (strncmp(line, "f ", 2) == 0)
         {
@@ -113,7 +120,11 @@ void load_obj_file_data(char* filename)
             face_t face = {
                 .a = vertex_indices[2],
                 .b = vertex_indices[1],
-                .c = vertex_indices[0]
+                .c = vertex_indices[0],
+                .normal_a = normal_indices[0] - 1,
+                .normal_b = normal_indices[1] - 1,
+                .normal_c = normal_indices[2] - 1,
+                .color = 0xFFFFFFFF
             };
 
             array_push(mesh.faces, face);
