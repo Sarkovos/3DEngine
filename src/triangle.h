@@ -28,7 +28,7 @@ typedef struct {
 // This stores the actual vec2 points of the triangle on the screen
 typedef struct {
     vec2_t points[3];
-    color_t point_colors[3];
+    color_t vertex_colors[3];
     uint32_t color;
 } triangle_t;
 

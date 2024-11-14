@@ -34,21 +34,24 @@ enum cull_method {
 } cull_method;
 
 enum render_method {
-    RENDER_WIRE,
-    RENDER_FILL_TRIANGLE,
-    RENDER_FILL_TRIANGLE_WIRE
+    RENDER_WIRE = 0,
+    RENDER_FILL_TRIANGLE = 1,
+    RENDER_FILL_TRIANGLE_WIRE = 2
 } render_method;
 
-int render_method_tracker = 0;
-
 enum projection_method {
-    VERTICAL_PERSPECTIVE,
-    HORIZONTAL_PERSPECTIVE,
-    ORTHOGRAPHIC
+    VERTICAL_PERSPECTIVE = 0,
+    HORIZONTAL_PERSPECTIVE = 1,
+    ORTHOGRAPHIC = 2
 } projection_method;
 
-int projection_method_tracker = 0;
-
+enum lighting_method
+{
+    NO_LIGHTING = 0,
+    FLAT_SHADING = 1,
+    GOURAUD_SHADING = 2,
+    PHONG_SHADING = 3
+} lighting_method;
 
 
 
@@ -149,39 +152,18 @@ void process_input(void)
 
             if (event.key.keysym.sym == SDLK_r)
             {
-                render_method_tracker++;
-                switch(render_method_tracker % 3)
-                {
-                    case 0:
-                        render_method = RENDER_FILL_TRIANGLE_WIRE;
-                        break;
-                    case 1: 
-                        render_method = RENDER_FILL_TRIANGLE;
-                        break;
-                    case 2:
-                        render_method = RENDER_WIRE;
-                        break;
-                }
-                
+                render_method = (enum render_method)((render_method + 1) % 3);                
             }
 
 
             if (event.key.keysym.sym == SDLK_p)
             {
-                projection_method_tracker++;
-                switch(projection_method_tracker % 3)
-                {
-                    case 0:
-                        projection_method = HORIZONTAL_PERSPECTIVE;
-                        break;
-                    case 1: 
-                        projection_method = VERTICAL_PERSPECTIVE;
-                        break;
-                    case 2:
-                        projection_method = ORTHOGRAPHIC;
-                        break;
-                }
-                
+                projection_method = (enum projection_method)((projection_method + 1) % 3); 
+            }
+
+            if (event.key.keysym.sym == SDLK_l)
+            {
+                lighting_method = (enum lighting_method)((lighting_method + 1) % 4); 
             }
 
             if (event.key.keysym.sym == SDLK_UP)
@@ -370,7 +352,7 @@ void update(void)
                 { projected_points[1].x, projected_points[1].y },
                 { projected_points[2].x, projected_points[2].y },
             },
-            .point_colors = {
+            .vertex_colors = {
                 vertex_colors[0],
                 vertex_colors[1],
                 vertex_colors[2],
@@ -390,50 +372,98 @@ void update(void)
     }
 }
 
+void triangle_render(triangle_t triangle)
+{
+    if (render_method == RENDER_FILL_TRIANGLE)
+    {
+        triangle_fill(triangle.points[0], triangle.points[1], triangle.points[2], triangle.color);
+    }
+
+    if (render_method == RENDER_WIRE)
+    {
+        draw_triangle(triangle.points[0].x, triangle.points[0].y, triangle.points[1].x,
+        triangle.points[1].y, triangle.points[2].x,triangle.points[2].y,
+        0xFFFFFFFF
+        );
+    }
+
+    if (render_method == RENDER_FILL_TRIANGLE_WIRE)
+    {
+        triangle_fill(triangle.points[0], triangle.points[1], triangle.points[2], triangle.color);
+        draw_triangle(triangle.points[0].x, triangle.points[0].y, triangle.points[1].x,
+        triangle.points[1].y, triangle.points[2].x,triangle.points[2].y,
+        0xFFFFFFFF
+        );
+        
+    }
+}
+
 void render(void)
 {
 
     for (int i = 0; i < num_triangles_to_render; i++)
     {
         triangle_t triangle = triangles_to_render[i];
+        uint32_t triangle_base_color = 0xff0000ff;
 
         // COLORS FOR TESTING BARYCENTRIC COORDS
         // triangle.point_colors[0] = (color_t){ .a = 0xFF, .r = 0xFF, .g = 0x00, .b = 0x00 };  // Red
         // triangle.point_colors[1] = (color_t){ .a = 0xFF, .r = 0x00, .g = 0xFF, .b = 0x00 };  // Green
         // triangle.point_colors[2] = (color_t){ .a = 0xFF, .r = 0x00, .g = 0x00, .b = 0xFF };  // Blue
 
+        // TODO: FIX BACKFACE CULLING TO BE BEFORE PROJECTION
         if (backface_cull_check(triangle.points[0], triangle.points[1], triangle.points[2]))
         {
-            if (render_method == RENDER_FILL_TRIANGLE)
-            {
-                triangle_fill(triangle.points[0], triangle.points[1], triangle.points[2], triangle.color);
-            }
 
-            if (render_method == RENDER_WIRE)
+            switch (lighting_method)
             {
-                draw_triangle(
-                triangle.points[0].x,
-                triangle.points[0].y,
-                triangle.points[1].x,
-                triangle.points[1].y,
-                triangle.points[2].x,
-                triangle.points[2].y,
-                0xFFFFFFFF
-                );
-            }
+                // This case uses just the basic triangle_full function, which only cares about the face color
+                case NO_LIGHTING:
+                {
+                    
+                    if (render_method == RENDER_FILL_TRIANGLE)
+                    {
+                        triangle_fill(triangle.points[0], triangle.points[1], triangle.points[2], triangle_base_color);
+                    }
 
-            if (render_method == RENDER_FILL_TRIANGLE_WIRE)
-            {
-                triangle_fill(triangle.points[0], triangle.points[1], triangle.points[2], triangle.color);
-                draw_triangle(
-                triangle.points[0].x,
-                triangle.points[0].y,
-                triangle.points[1].x,
-                triangle.points[1].y,
-                triangle.points[2].x,
-                triangle.points[2].y,
-                0xFFFFFFFF
-                );
+                    if (render_method == RENDER_WIRE)
+                    {
+                        draw_triangle(triangle.points[0].x, triangle.points[0].y, triangle.points[1].x,
+                        triangle.points[1].y, triangle.points[2].x,triangle.points[2].y,
+                        0xFFFFFFFF
+                        );
+                    }
+
+                    if (render_method == RENDER_FILL_TRIANGLE_WIRE)
+                    {
+                        triangle_fill(triangle.points[0], triangle.points[1], triangle.points[2], triangle_base_color);
+                        draw_triangle(triangle.points[0].x, triangle.points[0].y, triangle.points[1].x,
+                        triangle.points[1].y, triangle.points[2].x,triangle.points[2].y,
+                        0xFFFFFFFF
+                        );
+                        
+                    }
+                    break;
+                }
+
+                case FLAT_SHADING:
+                {
+                    triangle_render(triangle);
+                    break;
+                }
+
+                case GOURAUD_SHADING:
+                {
+                    triangle_render(triangle);
+                    break;
+                }
+
+                case PHONG_SHADING:
+                {
+                    triangle_render(triangle);
+                    break;
+                }
+
             }
         }
 

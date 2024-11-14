@@ -37,7 +37,6 @@ void triangle_fill(vec2_t v0, vec2_t v1, vec2_t v2, uint32_t color)
             bool is_inside = w0 >= 0 && w1 >= 0 && w2 >= 0;
             if (is_inside)
             {
-
                 draw_pixel(x, y, color);
             }
             
