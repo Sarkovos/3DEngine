@@ -27,7 +27,7 @@ int previous_frame_time;
 
 const float PI = 3.14159265358979;
 
-
+/*Input variables*/
 enum cull_method {
     CULL_NONE,
     CULL_BACKFACE
@@ -39,48 +39,25 @@ enum render_method {
     RENDER_FILL_TRIANGLE_WIRE
 } render_method;
 
+int render_method_tracker = 0;
+
 enum projection_method {
     VERTICAL_PERSPECTIVE,
     HORIZONTAL_PERSPECTIVE,
     ORTHOGRAPHIC
 } projection_method;
 
+int projection_method_tracker = 0;
+
+
+
 
 // OBJ file variable
 char *filename = "./static/Amongus.obj"; 
 
-
-/*Setup Functions to initialize variables and game objects*/
-void setup(void) 
+void init_perspective_matrix()
 {
-    //Initialze render mode and triangle culling method
-    render_method = RENDER_FILL_TRIANGLE_WIRE;
-    //cull_method = CULL_BACKFACE;
-    projection_method = VERTICAL_PERSPECTIVE;
-
-    //Allocate the required memory in bytes to hold the frame buffer
-    frame_buffer = (uint32_t*) malloc(sizeof(uint32_t) * window_width * window_height); //The cast here is not required, helps with porting between C and C++
-
-    //creating an SDL texture that is used to display the frame buffer
-    frame_buffer_texture = SDL_CreateTexture(
-        renderer,
-        SDL_PIXELFORMAT_ARGB8888,
-        SDL_TEXTUREACCESS_STREAMING,
-        window_width,
-        window_height
-    );
-
-    // load mesh data
-    //load_cube_mesh_data();
-    //load_obj_file_data("./static/cube.obj");
-    max_num_triangles_to_render = initialize_obj_file_data(filename);
-
-    triangles_to_render = malloc(sizeof(triangle_t) * max_num_triangles_to_render);
-
-    load_obj_file_data(filename);
-
-
-    //Initialize the perspective projection matrix
+    // Initialize the perspective projection matrix
     aspect = (float)window_width / (float)window_height;
 
     // Field of view in radians
@@ -106,6 +83,51 @@ void setup(void)
     horizontal_proj_matrix = mat4_make_perspective_GL(t, b, l, r, znear, zfar);
 }
 
+void init_orthographic_matrix()
+{
+    l = -ortho_width / 2.0f;
+    r = ortho_width / 2.0f;
+    b = -ortho_height / 2.0f;
+    t = ortho_height / 2.0f;
+    orthographic_matrix = mat4_make_orthographic(t, b, l, r, znear, zfar);
+}
+
+/*Setup Functions to initialize variables and game objects*/
+void setup(void) 
+{
+    // Initialze render mode and triangle culling method
+    render_method = RENDER_FILL_TRIANGLE_WIRE;
+
+    //cull_method = CULL_BACKFACE;
+    projection_method = VERTICAL_PERSPECTIVE;
+
+    //Allocate the required memory in bytes to hold the frame buffer
+    frame_buffer = (uint32_t*) malloc(sizeof(uint32_t) * window_width * window_height); //The cast here is not required, helps with porting between C and C++
+
+    //creating an SDL texture that is used to display the frame buffer
+    frame_buffer_texture = SDL_CreateTexture(
+        renderer,
+        SDL_PIXELFORMAT_ARGB8888,
+        SDL_TEXTUREACCESS_STREAMING,
+        window_width,
+        window_height
+    );
+
+    // load mesh data
+    //load_cube_mesh_data();
+    //load_obj_file_data("./static/cube.obj");
+    max_num_triangles_to_render = initialize_obj_file_data(filename);
+
+    triangles_to_render = malloc(sizeof(triangle_t) * max_num_triangles_to_render);
+
+    load_obj_file_data(filename);
+
+    init_perspective_matrix();
+    init_orthographic_matrix();   
+}
+
+
+
 /*Where you handle input*/
 void process_input(void)
 {
@@ -117,71 +139,61 @@ void process_input(void)
         case SDL_QUIT:
             is_running = false;
             break;
+            
         case SDL_KEYDOWN:
             if (event.key.keysym.sym == SDLK_ESCAPE)
             {
                 is_running = false;
                 break;
             }
-            if (event.key.keysym.sym == SDLK_1)
+
+            if (event.key.keysym.sym == SDLK_r)
             {
-                render_method = RENDER_FILL_TRIANGLE_WIRE;
+                render_method_tracker++;
+                switch(render_method_tracker % 3)
+                {
+                    case 0:
+                        render_method = RENDER_FILL_TRIANGLE_WIRE;
+                        break;
+                    case 1: 
+                        render_method = RENDER_FILL_TRIANGLE;
+                        break;
+                    case 2:
+                        render_method = RENDER_WIRE;
+                        break;
+                }
+                
             }
 
-            if (event.key.keysym.sym == SDLK_2)
-            {
-                render_method = RENDER_FILL_TRIANGLE;
-            }
 
-            if (event.key.keysym.sym == SDLK_3)
+            if (event.key.keysym.sym == SDLK_p)
             {
-                render_method = RENDER_WIRE;
-            }
-
-            if (event.key.keysym.sym == SDLK_9)
-            {
-                projection_method = HORIZONTAL_PERSPECTIVE;
-            }
-
-            if (event.key.keysym.sym == SDLK_8)
-            {
-                projection_method = VERTICAL_PERSPECTIVE;
-            }
-
-            if (event.key.keysym.sym == SDLK_7)
-            {
-                l = -ortho_width / 2.0f;
-                r = ortho_width / 2.0f;
-                b = -ortho_height / 2.0f;
-                t = ortho_height / 2.0f;
-                orthographic_matrix = mat4_make_orthographic(t, b, l, r, znear, zfar);
-                projection_method = ORTHOGRAPHIC;
+                projection_method_tracker++;
+                switch(projection_method_tracker % 3)
+                {
+                    case 0:
+                        projection_method = HORIZONTAL_PERSPECTIVE;
+                        break;
+                    case 1: 
+                        projection_method = VERTICAL_PERSPECTIVE;
+                        break;
+                    case 2:
+                        projection_method = ORTHOGRAPHIC;
+                        break;
+                }
+                
             }
 
             if (event.key.keysym.sym == SDLK_UP)
             {
                 fov_degrees += 10.0;
-                fov = fov_degrees * (PI / 180);
-                r = znear * tan(fov / 2.0);
-                l = -r;
-                t = r / aspect;
-                b = -t;
-
-                vertical_proj_matrix = mat4_make_perspective(fov, aspect, znear, zfar);
-                horizontal_proj_matrix = mat4_make_perspective_GL(t, b, l, r, znear, zfar);
+                init_perspective_matrix();
             }
 
             if (event.key.keysym.sym == SDLK_DOWN)
             {
                 fov_degrees -= 10.0;
-                fov = fov_degrees * (PI / 180);
-                r = znear * tan(fov / 2.0);
-                l = -r;
-                t = r / aspect;
-                b = -t;
-
-                vertical_proj_matrix = mat4_make_perspective(fov, aspect, znear, zfar);
-                horizontal_proj_matrix = mat4_make_perspective_GL(t, b, l, r, znear, zfar);
+                init_perspective_matrix();
             }
     }
 }
