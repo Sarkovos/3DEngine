@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include "vector.h"
 #include "display.h"
+#include "texture.h"
 
 #include <math.h>
 
@@ -15,6 +16,9 @@ typedef struct {
     int normal_a;
     int normal_b;
     int normal_c;
+    tex2_t a_uv;
+    tex2_t b_uv;
+    tex2_t c_uv;
     uint32_t color;
 } face_t;
 
@@ -28,14 +32,20 @@ typedef struct {
 // This stores the actual vec2 points of the triangle on the screen
 typedef struct {
     vec2_t points[3];
+    tex2_t texcoords[3];
     color_t vertex_colors[3];
-    uint32_t color;
+    vec3_t vertex_normals[3];
+    color_t color;
 } triangle_t;
 
-void triangle_fill(vec2_t v0, vec2_t v1, vec2_t v2, uint32_t color);
+void triangle_fill(vec2_t v0, vec2_t v1, vec2_t v2, color_t color);
 void triangle_fill_barycentric(vec2_t v0, vec2_t v1, vec2_t v2, color_t vertexColors[3]);
 bool backface_cull_check (vec2_t v0, vec2_t v1, vec2_t v2);
 bool is_top_left(vec2_t* start, vec2_t* end);
+void draw_textured_triangle(vec2_t v0, vec2_t v1, vec2_t v2, color_t vertexColors[3], triangle_t triangle, uint32_t* texture);
+
+uint32_t color_t_to_uint32(color_t color);
+color_t uint32_to_color_t(uint32_t color);
 
 
 #endif

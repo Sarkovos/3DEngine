@@ -17,6 +17,7 @@ typedef struct {
     vec3_t* vertices; // dynamic array of vertices
     face_t* faces;    // dynamic array of faces
     vec3_t* normals; // Array to store normals
+    uint32_t* vertex_colors;// dynamic array of vertex colors
     vec3_t rotation; // rotation with x, y, and z values
     vec3_t scale;    // scale with x, y, and z
     vec3_t translation; // translation with z, y and z values

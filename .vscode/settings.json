@@ -3,6 +3,7 @@
         "random": "c",
         "vector.h": "c",
         "triangle.h": "c",
-        "light.h": "c"
+        "light.h": "c",
+        "texture.h": "c"
     }
 }

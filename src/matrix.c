@@ -2,7 +2,7 @@
 #include "matrix.h"
 
 
-mat3_t mat3x3_identity(void)
+mat3_t mat3_identity(void)
 {
 	mat3_t m =
 	{ {
@@ -26,6 +26,21 @@ mat4_t mat4_identity(void) {
         { 0, 0, 0, 1 }
     }};
     return m;
+}
+
+mat3_t mat3_from_mat4(mat4_t m4) 
+{
+    mat3_t m3;
+
+    // Copy the upper-left 3x3 elements
+    for (int i = 0; i < 3; i++) 
+    {
+        for (int j = 0; j < 3; j++) 
+        {
+            m3.m[i][j] = m4.m[i][j];
+        }
+    }
+    return m3;
 }
 
 mat4_t mat4_make_scale(float sx, float sy, float sz) {
@@ -106,6 +121,15 @@ vec4_t mat4_mul_vec4(mat4_t m, vec4_t v) {
     return result;
 }
 
+vec3_t mat3_mul_vec3(mat3_t m, vec3_t v) {
+    vec3_t result;
+    result.x = m.m[0][0] * v.x + m.m[0][1] * v.y + m.m[0][2] * v.z;
+    result.y = m.m[1][0] * v.x + m.m[1][1] * v.y + m.m[1][2] * v.z;
+    result.z = m.m[2][0] * v.x + m.m[2][1] * v.y + m.m[2][2] * v.z;
+    return result;
+}
+
+
 mat4_t mat4_mul_mat4(mat4_t a, mat4_t b)
 {
     mat4_t m;
@@ -119,6 +143,8 @@ mat4_t mat4_mul_mat4(mat4_t a, mat4_t b)
 
     return m;
 }
+
+
 
 mat4_t mat4_make_perspective(float fov, float aspect, float znear, float zfar)
 {
@@ -207,75 +233,83 @@ mat4_t mat4_transpose(mat4_t m) {
     return result;
 }
 
-// Function to calculate the inverse of a 4x4 matrix
-mat4_t inverse4x4(mat4_t mat)
-{
-	mat4_t result = mat4_identity();
-
-	// Calculate the determinant of the input matrix
-	float det = mat.m[0][0] * cofactor(mat, 0, 0) +
-		mat.m[0][1] * cofactor(mat, 0, 1) +
-		mat.m[0][2] * cofactor(mat, 0, 2) +
-		mat.m[0][3] * cofactor(mat, 0, 3);
-
-	// Check if the determinant is zero (matrix is singular)
-	if (det == 0.0f) {
-		// Handle the error (e.g., print an error message or return an identity matrix)
-		printf("Error: Singular matrix, inverse does not exist.\n");
-		// Returning an identity matrix for simplicity; you might want to handle errors differently
-		return result;
-	}
-
-	// Calculate the inverse by dividing the adjugate by the determinant
-	float invDet = 1.0f / det;
-
-	for (int i = 0; i < 4; ++i) {
-		for (int j = 0; j < 4; ++j) {
-			result.m[i][j] = adjugate4x4(mat).m[i][j] * invDet;
-		}
-	}
-
-	return result;
+mat3_t mat3_transpose(mat3_t m) {
+    mat3_t result;
+    for (int i = 0; i < 3; i++) {
+        for (int j = 0; j < 3; j++) {
+            result.m[i][j] = m.m[j][i];
+        }
+    }
+    return result;
 }
 
-mat4_t adjugate4x4(mat4_t mat)
-{
-	mat4_t result;
+// Function to compute the inverse of a 3x3 matrix using Gauss-Jordan elimination
+mat3_t mat3_inverse(mat3_t m) {
+    mat3_t inverse;
+    float temp;
 
-	for (int i = 0; i < 4; ++i)
-	{
-		for (int j = 0; j < 4; ++j)
-		{
-			// Calculate the cofactor and transpose it to get the adjugate
-			result.m[j][i] = cofactor(mat, i, j);
-		}
-	}
+    // Create an augmented matrix [m | I]
+    float aug[3][3 * 2];
 
-	return result;
+    // Initialize the augmented matrix
+    for (int i = 0; i < 3; i++) {
+        for (int j = 0; j < 3; j++) {
+            // Copy the original matrix
+            aug[i][j] = m.m[i][j];
+            // Initialize the identity matrix
+            aug[i][j + 3] = (i == j) ? 1.0f : 0.0f;
+        }
+    }
+
+    // Perform Gauss-Jordan elimination
+    for (int i = 0; i < 3; i++) {
+        // Partial pivoting
+        float maxElement = fabs(aug[i][i]);
+        int maxRow = i;
+        for (int k = i + 1; k < 3; k++) {
+            if (fabs(aug[k][i]) > maxElement) {
+                maxElement = fabs(aug[k][i]);
+                maxRow = k;
+            }
+        }
+
+        // Swap maximum row with current row (if needed)
+        if (maxRow != i) {
+            for (int k = 0; k < 3 * 2; k++) {
+                float tmp = aug[i][k];
+                aug[i][k] = aug[maxRow][k];
+                aug[maxRow][k] = tmp;
+            }
+        }
+
+        // Check for singularity
+        if (fabs(aug[i][i]) < EPSILON) {
+            fprintf(stderr, "Error: Singular matrix cannot be inverted.\n");
+        }
+
+        // Normalize the pivot row
+        temp = aug[i][i];
+        for (int j = 0; j < 3 * 2; j++) {
+            aug[i][j] /= temp;
+        }
+
+        // Eliminate the other rows
+        for (int k = 0; k < 3; k++) {
+            if (k != i) {
+                temp = aug[k][i];
+                for (int j = 0; j < 3 * 2; j++) {
+                    aug[k][j] -= aug[i][j] * temp;
+                }
+            }
+        }
+    }
+
+    // Extract the inverse matrix from the augmented matrix
+    for (int i = 0; i < 3; i++) {
+        for (int j = 0; j < 3; j++) {
+            inverse.m[i][j] = aug[i][j + 3];
+        }
+    }
+
+    return inverse;
 }
-
-float cofactor(mat4_t mat, int row, int col)
-{
-	int sign = ((row + col) & 2) == 0 ? 1 : -1;
-
-	mat3_t mat3x3 =
-	{ {
-		{mat.m[(row + 1) % 4][(col + 1) % 4], mat.m[(row + 1) % 4][(col + 2) % 4], mat.m[(row + 1) % 4][(col + 3) % 4]},
-		{mat.m[(row + 2) % 4][(col + 1) % 4], mat.m[(row + 2) % 4][(col + 2) % 4], mat.m[(row + 2) % 4][(col + 3) % 4]},
-		{mat.m[(row + 3) % 4][(col + 1) % 4], mat.m[(row + 3) % 4][(col + 2) % 4], mat.m[(row + 3) % 4][(col + 3) % 4]}
-	} };
-
-	float determinant = determinant3x3(mat3x3);
-
-	return sign * determinant;
-}
-
-// Function to calculate the determinant of a 3x3 matrix
-float determinant3x3(mat3_t mat)
-{
-	return mat.m[0][0] * (mat.m[1][1] * mat.m[2][2] - mat.m[1][2] * mat.m[2][1]) -
-		mat.m[0][1] * (mat.m[1][0] * mat.m[2][2] - mat.m[1][2] * mat.m[2][0]) +
-		mat.m[0][2] * (mat.m[1][0] * mat.m[2][1] - mat.m[1][1] * mat.m[2][0]);
-}
-
-

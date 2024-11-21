@@ -9,7 +9,7 @@ float edge_cross(vec2_t* a, vec2_t* b, vec2_t* p)
     return ab.x * ap.y - ab.y * ap.x;
 
 }
-void triangle_fill(vec2_t v0, vec2_t v1, vec2_t v2, uint32_t color)
+void triangle_fill(vec2_t v0, vec2_t v1, vec2_t v2, color_t color)
 {
     // Find the bounding box with all canidate pixels
     int x_min = floor(fmin(fmin(v0.x, v1.x), v2.x));
@@ -34,10 +34,12 @@ void triangle_fill(vec2_t v0, vec2_t v1, vec2_t v2, uint32_t color)
             float w1 = edge_cross(&v2, &v0, &p) + bias1;
             float w2 = edge_cross(&v0, &v1, &p) + bias2;
 
+            
+
             bool is_inside = w0 >= 0 && w1 >= 0 && w2 >= 0;
             if (is_inside)
             {
-                draw_pixel(x, y, color);
+                draw_pixel(x, y, color_t_to_uint32(color));
             }
             
         }
@@ -58,8 +60,6 @@ void triangle_fill_barycentric(vec2_t v0, vec2_t v1, vec2_t v2, color_t vertexCo
 
     // Find the area of the entire triangle/parallelogram
     float area = edge_cross(&v0, &v1, &v2);
-
-
 
     // loop all canidate pixels inside the bounding box
     for (int y = y_min; y <= y_max; y++)
@@ -87,6 +87,12 @@ void triangle_fill_barycentric(vec2_t v0, vec2_t v1, vec2_t v2, color_t vertexCo
                 int r = (alpha) * vertexColors[0].r + (beta) * vertexColors[1].r + (gamma) * vertexColors[2].r;
                 int g = (alpha) * vertexColors[0].g + (beta) * vertexColors[1].g + (gamma) * vertexColors[2].g;
                 int b = (alpha) * vertexColors[0].b + (beta) * vertexColors[1].b + (gamma) * vertexColors[2].b;
+
+                // // Clamp color values
+                // r = r < 0 ? 0 : (r > 255 ? 255 : r);
+                // g = g < 0 ? 0 : (g > 255 ? 255 : g);
+                // b = b < 0 ? 0 : (b > 255 ? 255 : b);
+
 
                 // Combine the interpolated values into a uint32_t color
                 uint32_t interp_color = 0x00000000;
@@ -131,3 +137,86 @@ bool backface_cull_check (vec2_t v0, vec2_t v1, vec2_t v2)
     
     return (cross > 0);
 } 
+
+uint32_t color_t_to_uint32(color_t c) {
+    return ((uint32_t)c.a << 24) |
+           ((uint32_t)c.r << 16) |
+           ((uint32_t)c.g << 8) |
+           (uint32_t)c.b;
+}
+
+color_t uint32_to_color_t(uint32_t color) {
+    color_t c;
+    c.a = (color >> 24) & 0xFF;
+    c.r = (color >> 16) & 0xFF;
+    c.g = (color >> 8) & 0xFF;
+    c.b = color & 0xFF;
+    return c;
+}
+
+void draw_textured_triangle(vec2_t v0, vec2_t v1, vec2_t v2, color_t vertexColors[3], triangle_t triangle, uint32_t* texture)
+{
+    // Find the bounding box with all canidate pixels
+    int x_min = floor(fmin(fmin(v0.x, v1.x), v2.x));
+    int y_min = floor(fmin(fmin(v0.y, v1.y), v2.y));
+    int x_max = ceil(fmax(fmax(v0.x, v1.x), v2.x));
+    int y_max = ceil(fmax(fmax(v0.y, v1.y), v2.y));
+
+    float bias0 = is_top_left(&v1, &v2) ? 0 : -0.0001;
+    float bias1 = is_top_left(&v2, &v0) ? 0 : -0.0001;
+    float bias2 = is_top_left(&v0, &v1) ? 0 : -0.0001;
+
+    // Find the area of the entire triangle/parallelogram
+    float area = edge_cross(&v0, &v1, &v2);
+
+    // loop all canidate pixels inside the bounding box
+    for (int y = y_min; y <= y_max; y++)
+    {
+        for (int x = x_min; x <= x_max; x++)
+        {
+            vec2_t p = {x, y};
+
+            // check if the edges and the point all have a positive cross product
+            // if all cross products are positive, this point is within the triangle
+            float w0 = edge_cross(&v1, &v2, &p) + bias0;
+            float w1 = edge_cross(&v2, &v0, &p) + bias1;
+            float w2 = edge_cross(&v0, &v1, &p) + bias2;
+
+            bool is_inside = w0 >= 0 && w1 >= 0 && w2 >= 0;
+            if (is_inside)
+            {
+
+                // compute barycentric weights alpha, beta, and gamma
+                float alpha = w0 / (float)area;
+                float beta = w1 / (float)area;
+                float gamma = w2 / (float)area;
+
+                // get our uv texture coordinates
+                float u0 = triangle.texcoords[0].u;
+                float v0 = triangle.texcoords[0].v;
+
+                float u1 = triangle.texcoords[1].u;
+                float v1 = triangle.texcoords[1].v;
+
+                float u2 = triangle.texcoords[2].u;
+                float v2 = triangle.texcoords[2].v;
+
+
+                float interpolated_u = alpha * (u0) + (u1) * beta + (u2) * gamma;
+                float interpolated_v = alpha * (v0) + (v1) * beta + (v2) * gamma;
+
+
+                int tex_x = abs((int)(interpolated_u * texture_width));
+                int tex_y = abs((int)(interpolated_v * texture_height));
+
+
+                draw_pixel(x, y, texture[(texture_width * tex_y)  + tex_x]);
+            }
+            
+        }
+    }
+}
+
+
+
+
