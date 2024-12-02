@@ -13,6 +13,8 @@
 #include "texture.h"
 #include "triangle.h"
 
+#include "upng.h"
+
 /*Global variables*/
 mat4_t vertical_proj_matrix;
 mat4_t horizontal_proj_matrix;
@@ -122,11 +124,15 @@ void setup(void)
     );
 
     // Manually load the hardcoded texture data from the static array
-    mesh_texture = (uint32_t*)REDBRICK_TEXTURE;
+    // mesh_texture = (uint32_t*)REDBRICK_TEXTURE;
+
+    // load the texture information from an external PNG file
+    load_png_texture_data("static/cube2.png");
 
     // load mesh data
     load_cube_mesh_data();
     //load_obj_file_data("./static/cube.obj");
+
     //max_num_triangles_to_render = initialize_obj_file_data(filename);
     max_num_triangles_to_render = 12;
 
@@ -217,9 +223,9 @@ void update(void)
     // initialize the counter of triangles to render for current frame
     num_triangles_to_render = 0;
 
-    //mesh.rotation.x += 0.01;
+    mesh.rotation.x += 0.01;
     mesh.rotation.y -= 0.01;
-    //mesh.rotation.z += 0.01;
+    mesh.rotation.z += 0.01;
 
     //mesh.scale.x += 0.002;
     //mesh.scale.y += 0.01;
@@ -591,6 +597,7 @@ void free_resources(void)
     free(frame_buffer);
     free(triangles_to_render);
     free(z_buffer);
+    upng_free(png_texture);
 }
 
 // Function to print a 4x4 matrix
