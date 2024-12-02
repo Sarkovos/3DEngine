@@ -9,8 +9,12 @@ float edge_cross(vec2_t* a, vec2_t* b, vec2_t* p)
     return ab.x * ap.y - ab.y * ap.x;
 
 }
-void triangle_fill(vec2_t v0, vec2_t v1, vec2_t v2, color_t color)
+void triangle_fill(triangle_t t, color_t color)
 {
+    vec2_t v0 = { t.points[0].x, t.points[0].y };
+    vec2_t v1 = { t.points[1].x, t.points[1].y };
+    vec2_t v2 = { t.points[2].x, t.points[2].y };
+
     // Find the bounding box with all canidate pixels
     int x_min = floor(fmin(fmin(v0.x, v1.x), v2.x));
     int y_min = floor(fmin(fmin(v0.y, v1.y), v2.y));
@@ -46,8 +50,12 @@ void triangle_fill(vec2_t v0, vec2_t v1, vec2_t v2, color_t color)
     }
 }
 
-void triangle_fill_barycentric(vec2_t v0, vec2_t v1, vec2_t v2, color_t vertexColors[3])
+void triangle_fill_barycentric(triangle_t t, color_t vertexColors[3])
 {
+    vec2_t v0 = { t.points[0].x, t.points[0].y };
+    vec2_t v1 = { t.points[1].x, t.points[1].y };
+    vec2_t v2 = { t.points[2].x, t.points[2].y };
+
     // Find the bounding box with all canidate pixels
     int x_min = floor(fmin(fmin(v0.x, v1.x), v2.x));
     int y_min = floor(fmin(fmin(v0.y, v1.y), v2.y));
@@ -120,10 +128,14 @@ bool is_top_left(vec2_t* start, vec2_t* end)
 }
 
 // in a left handed, counterclockwise, cross product sign is positive
-bool backface_cull_check (vec2_t v0, vec2_t v1, vec2_t v2)
+bool backface_cull_check (triangle_t t)
 {
     vec2_t edge1;
     vec2_t edge2;
+
+    vec2_t v0 = { t.points[0].x, t.points[0].y };
+    vec2_t v1 = { t.points[1].x, t.points[1].y };
+    vec2_t v2 = { t.points[2].x, t.points[2].y };
 
     // computer edge vectors
     edge1.x = v1.x - v0.x;
@@ -154,8 +166,12 @@ color_t uint32_to_color_t(uint32_t color) {
     return c;
 }
 
-void draw_textured_triangle(vec2_t v0, vec2_t v1, vec2_t v2, color_t vertexColors[3], triangle_t triangle, uint32_t* texture)
+void draw_textured_triangle(color_t vertexColors[3], triangle_t triangle, uint32_t* texture)
 {
+    vec2_t v0 = { triangle.points[0].x, triangle.points[0].y };
+    vec2_t v1 = { triangle.points[1].x, triangle.points[1].y };
+    vec2_t v2 = { triangle.points[2].x, triangle.points[2].y };
+
     // Find the bounding box with all canidate pixels
     int x_min = floor(fmin(fmin(v0.x, v1.x), v2.x));
     int y_min = floor(fmin(fmin(v0.y, v1.y), v2.y));
@@ -193,18 +209,29 @@ void draw_textured_triangle(vec2_t v0, vec2_t v1, vec2_t v2, color_t vertexColor
 
                 // get our uv texture coordinates
                 float u0 = triangle.texcoords[0].u;
-                float v0 = triangle.texcoords[0].v;
+                float v_0 = triangle.texcoords[0].v;
 
                 float u1 = triangle.texcoords[1].u;
-                float v1 = triangle.texcoords[1].v;
+                float v_1 = triangle.texcoords[1].v;
 
                 float u2 = triangle.texcoords[2].u;
-                float v2 = triangle.texcoords[2].v;
+                float v_2 = triangle.texcoords[2].v;
 
+                // variables to store the interpolated values of U, V, and 1/w for the current pixel
+                float interpolated_u;
+                float interpolated_v;
+                float interpolated_reciprocal_w;
 
-                float interpolated_u = alpha * (u0) + (u1) * beta + (u2) * gamma;
-                float interpolated_v = alpha * (v0) + (v1) * beta + (v2) * gamma;
+                // perform the interpolation of all U/w and V/w values using barycentric weights and a factpr pf 1/w
+                interpolated_u = alpha * (u0 / triangle.points[0].w) + (u1 / triangle.points[1].w) * beta + (u2 / triangle.points[2].w) * gamma;
+                interpolated_v = alpha * (v_0 / triangle.points[0].w) + (v_1 / triangle.points[1].w) * beta + (v_2 / triangle.points[2].w) * gamma;
 
+                // also interpolate the value of 1/w for the current pixel
+                interpolated_reciprocal_w = (1 / triangle.points[0].w) * alpha + (1 / triangle.points[1].w) * beta + (1 / triangle.points[2].w) * gamma;
+
+                // now we can divide back both interpolated values by 1/w
+                interpolated_u /= interpolated_reciprocal_w;
+                interpolated_v /= interpolated_reciprocal_w;
 
                 int tex_x = abs((int)(interpolated_u * texture_width));
                 int tex_y = abs((int)(interpolated_v * texture_height));

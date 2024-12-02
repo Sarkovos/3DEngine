@@ -31,19 +31,18 @@ typedef struct {
 
 // This stores the actual vec2 points of the triangle on the screen
 typedef struct {
-    vec2_t points[3];
+    vec4_t points[3];
     tex2_t texcoords[3];
     color_t vertex_colors[3];
     vec3_t vertex_normals[3];
     color_t color;
 } triangle_t;
 
-void triangle_fill(vec2_t v0, vec2_t v1, vec2_t v2, color_t color);
-void triangle_fill_barycentric(vec2_t v0, vec2_t v1, vec2_t v2, color_t vertexColors[3]);
-bool backface_cull_check (vec2_t v0, vec2_t v1, vec2_t v2);
+void triangle_fill(triangle_t t, color_t color);
+void triangle_fill_barycentric(triangle_t t, color_t vertexColors[3]);
+bool backface_cull_check (triangle_t t);
 bool is_top_left(vec2_t* start, vec2_t* end);
-void draw_textured_triangle(vec2_t v0, vec2_t v1, vec2_t v2, color_t vertexColors[3], triangle_t triangle, uint32_t* texture);
-
+void draw_textured_triangle(color_t vertexColors[3], triangle_t triangle, uint32_t* texture);
 uint32_t color_t_to_uint32(color_t color);
 color_t uint32_to_color_t(uint32_t color);
 

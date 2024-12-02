@@ -57,8 +57,6 @@ enum lighting_method
     PHONG_SHADING = 3
 } lighting_method;
 
-
-
 // OBJ file variable
 char *filename = "./static/Amongus.obj"; 
 
@@ -110,6 +108,9 @@ void setup(void)
 
     //Allocate the required memory in bytes to hold the frame buffer
     frame_buffer = (uint32_t*) malloc(sizeof(uint32_t) * window_width * window_height); //The cast here is not required, helps with porting between C and C++
+
+    //Allocate the required memory in bytes to hold the z buffer
+    z_buffer = (float*) malloc(sizeof(float) * window_width * window_height);
 
     //creating an SDL texture that is used to display the frame buffer
     frame_buffer_texture = SDL_CreateTexture(
@@ -308,7 +309,6 @@ void update(void)
 		// APPLY TRANSFORMATION TO NORMALS
 		for (int j = 0; j < 3; j++)
         {
-
             vec3_t transformed_normal = mat3_mul_vec3(normals_world_matrix, vertex_normals[j]);
 
 			// Normalize the transformed normal
@@ -363,9 +363,9 @@ void update(void)
          // **Create the triangle with per-vertex colors**
         triangle_t projected_triangle = {
             .points = {
-                { projected_points[0].x, projected_points[0].y },
-                { projected_points[1].x, projected_points[1].y },
-                { projected_points[2].x, projected_points[2].y },
+                { projected_points[0].x, projected_points[0].y, projected_points[0].z, projected_points[0].w },
+                { projected_points[1].x, projected_points[1].y, projected_points[1].z, projected_points[1].w },
+                { projected_points[2].x, projected_points[2].y, projected_points[2].z, projected_points[2].w },
             },
             .vertex_colors = {
                 vertex_colors[0],
@@ -407,7 +407,7 @@ void triangle_render(triangle_t triangle)
 {
     if (render_method == RENDER_FILL_TRIANGLE)
     {
-        triangle_fill(triangle.points[0], triangle.points[1], triangle.points[2], triangle.color);
+        triangle_fill(triangle, triangle.color);
     }
 
     if (render_method == RENDER_WIRE)
@@ -420,7 +420,7 @@ void triangle_render(triangle_t triangle)
 
     if (render_method == RENDER_FILL_TRIANGLE_WIRE)
     {
-        triangle_fill(triangle.points[0], triangle.points[1], triangle.points[2], triangle.color);
+        triangle_fill(triangle, triangle.color);
         draw_triangle(triangle.points[0].x, triangle.points[0].y, triangle.points[1].x,
         triangle.points[1].y, triangle.points[2].x,triangle.points[2].y,
         0xFFFFFFFF
@@ -430,12 +430,12 @@ void triangle_render(triangle_t triangle)
 
     if (render_method == RENDER_TEXTURED)
     {
-        draw_textured_triangle(triangle.points[0], triangle.points[1], triangle.points[2], triangle.vertex_colors, triangle, mesh_texture);
+        draw_textured_triangle(triangle.vertex_colors, triangle, mesh_texture);
     }
 
     if (render_method == RENDER_TEXTURED_WIRE)
     {
-        draw_textured_triangle(triangle.points[0], triangle.points[1], triangle.points[2], triangle.vertex_colors, triangle, mesh_texture);
+        draw_textured_triangle(triangle.vertex_colors, triangle, mesh_texture);
         draw_triangle(triangle.points[0].x, triangle.points[0].y, triangle.points[1].x,
         triangle.points[1].y, triangle.points[2].x,triangle.points[2].y,
         0xFFFFFFFF
@@ -449,7 +449,6 @@ void render(void)
     for (int i = 0; i < num_triangles_to_render; i++)
     {
         triangle_t triangle = triangles_to_render[i];
-        color_t triangle_base_color = (color_t){ .a = 0xFF, .r = 0xFF, .g = 0xFF, .b = 0xFF };  // Cyan
         color_t triangle_color;
 
         // //COLORS FOR TESTING BARYCENTRIC COORDS
@@ -458,7 +457,7 @@ void render(void)
         // triangle.vertex_colors[2] = (color_t){ .a = 0xFF, .r = 0x00, .g = 0x00, .b = 0xFF };  // Blue
 
         // TODO: FIX BACKFACE CULLING TO BE BEFORE PROJECTION
-        if (backface_cull_check(triangle.points[0], triangle.points[1], triangle.points[2]))
+        if (backface_cull_check(triangle))
         {
 
             switch (lighting_method)
@@ -469,7 +468,7 @@ void render(void)
                     
                     if (render_method == RENDER_FILL_TRIANGLE)
                     {
-                        triangle_fill(triangle.points[0], triangle.points[1], triangle.points[2], triangle_base_color);
+                        triangle_fill(triangle, triangle.color);
                     }
 
                     if (render_method == RENDER_WIRE)
@@ -482,7 +481,7 @@ void render(void)
 
                     if (render_method == RENDER_FILL_TRIANGLE_WIRE)
                     {
-                        triangle_fill(triangle.points[0], triangle.points[1], triangle.points[2], triangle_base_color);
+                        triangle_fill(triangle, triangle.color);
                         draw_triangle(triangle.points[0].x, triangle.points[0].y, triangle.points[1].x,
                         triangle.points[1].y, triangle.points[2].x,triangle.points[2].y,
                         0xFFFFFFFF
@@ -492,12 +491,12 @@ void render(void)
 
                     if (render_method == RENDER_TEXTURED)
                     {
-                        draw_textured_triangle(triangle.points[0], triangle.points[1], triangle.points[2], triangle.vertex_colors, triangle, mesh_texture);
+                        draw_textured_triangle(triangle.vertex_colors, triangle, mesh_texture);
                     }
 
                     if (render_method == RENDER_TEXTURED_WIRE)
                     {
-                        draw_textured_triangle(triangle.points[0], triangle.points[1], triangle.points[2], triangle.vertex_colors, triangle, mesh_texture);
+                        draw_textured_triangle(triangle.vertex_colors, triangle, mesh_texture);
                         draw_triangle(triangle.points[0].x, triangle.points[0].y, triangle.points[1].x,
                         triangle.points[1].y, triangle.points[2].x,triangle.points[2].y,
                         0xFFFFFFFF
@@ -540,7 +539,7 @@ void render(void)
 
                     if (render_method == RENDER_FILL_TRIANGLE)
                     {
-                        triangle_fill_barycentric(triangle.points[0], triangle.points[1], triangle.points[2], triangle.vertex_colors);
+                        triangle_fill_barycentric(triangle, triangle.vertex_colors);
                     }
 
                     if (render_method == RENDER_WIRE)
@@ -553,7 +552,7 @@ void render(void)
 
                     if (render_method == RENDER_FILL_TRIANGLE_WIRE)
                     {
-                        triangle_fill_barycentric(triangle.points[0], triangle.points[1], triangle.points[2], triangle.vertex_colors);
+                        triangle_fill_barycentric(triangle, triangle.vertex_colors);
                         draw_triangle(triangle.points[0].x, triangle.points[0].y, triangle.points[1].x,
                         triangle.points[1].y, triangle.points[2].x,triangle.points[2].y,
                         0xFFFFFFFF
@@ -576,6 +575,7 @@ void render(void)
 
     render_frame_buffer();
     clear_frame_buffer(0xFF000000);
+    clear_z_buffer();
 
     SDL_RenderPresent(renderer);
 
@@ -590,6 +590,7 @@ void free_resources(void)
     array_free(mesh.vertex_colors);
     free(frame_buffer);
     free(triangles_to_render);
+    free(z_buffer);
 }
 
 // Function to print a 4x4 matrix

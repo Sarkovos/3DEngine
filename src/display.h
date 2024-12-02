@@ -17,6 +17,7 @@
 extern SDL_Window* window;
 extern SDL_Renderer* renderer;
 extern uint32_t* frame_buffer;
+extern float* z_buffer;
 extern SDL_Texture* frame_buffer_texture;
 
 extern int window_width;
@@ -28,6 +29,7 @@ extern float fov;
 bool initialize_window(void);
 void render_frame_buffer(void);
 void clear_frame_buffer (uint32_t color);
+void clear_z_buffer();
 void destroy_window(void);
 void draw_pixel(int x, int y, uint32_t color);
 void draw_line(int x0, int y0, int x1, int y1, uint32_t color);
