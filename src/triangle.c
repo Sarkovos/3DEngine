@@ -32,6 +32,9 @@ void triangle_fill(triangle_t t, color_t color)
         {
             vec2_t p = {x, y};
 
+            // Find the area of the entire triangle/parallelogram
+            float area = edge_cross(&v0, &v1, &v2);
+
             // check if the edges and the point all have a positive cross product
             // if all cross products are positive, this point is within the triangle
             float w0 = edge_cross(&v1, &v2, &p) + bias0;
@@ -43,7 +46,114 @@ void triangle_fill(triangle_t t, color_t color)
             bool is_inside = w0 >= 0 && w1 >= 0 && w2 >= 0;
             if (is_inside)
             {
-                draw_pixel(x, y, color_t_to_uint32(color));
+                // compute barycentric weights alpha, beta, and gamma
+                float alpha = w0 / (float)area;
+                float beta = w1 / (float)area;
+                float gamma = w2 / (float)area;
+
+                float interpolated_reciprocal_w = (1 / t.points[0].w) * alpha + (1 / t.points[1].w) * beta + (1 / t.points[2].w) * gamma;
+
+
+                // adjust 1/w so the pixels that are closer to the camera have smaller values
+                interpolated_reciprocal_w = 1.0 - interpolated_reciprocal_w;
+
+                // only draw the pixel if the depth value is less than the one previously stored in the z-buffer
+                if (interpolated_reciprocal_w < z_buffer[(window_width * y) + x])
+                {
+                    draw_pixel(x, y, color_t_to_uint32(color));
+
+                    // Update the z-buffer value with the 1/w of this current pixel
+                    z_buffer[(window_width * y) + x] = interpolated_reciprocal_w;
+
+
+                }
+
+            }
+            
+        }
+    }
+}
+
+void triangle_z_buffer(triangle_t t)
+{
+    vec2_t v0 = { t.points[0].x, t.points[0].y };
+    vec2_t v1 = { t.points[1].x, t.points[1].y };
+    vec2_t v2 = { t.points[2].x, t.points[2].y };
+
+    // Find the bounding box with all canidate pixels
+    int x_min = floor(fmin(fmin(v0.x, v1.x), v2.x));
+    int y_min = floor(fmin(fmin(v0.y, v1.y), v2.y));
+    int x_max = ceil(fmax(fmax(v0.x, v1.x), v2.x));
+    int y_max = ceil(fmax(fmax(v0.y, v1.y), v2.y));
+
+    float bias0 = is_top_left(&v1, &v2) ? 0 : -0.0001;
+    float bias1 = is_top_left(&v2, &v0) ? 0 : -0.0001;
+    float bias2 = is_top_left(&v0, &v1) ? 0 : -0.0001;
+
+    // Find the area of the entire triangle/parallelogram
+    float area = edge_cross(&v0, &v1, &v2);
+
+    // loop all canidate pixels inside the bounding box
+    for (int y = y_min; y <= y_max; y++)
+    {
+        for (int x = x_min; x <= x_max; x++)
+        {
+            vec2_t p = {x, y};
+
+            // check if the edges and the point all have a positive cross product
+            // if all cross products are positive, this point is within the triangle
+            float w0 = edge_cross(&v1, &v2, &p) + bias0;
+            float w1 = edge_cross(&v2, &v0, &p) + bias1;
+            float w2 = edge_cross(&v0, &v1, &p) + bias2;
+
+            bool is_inside = w0 >= 0 && w1 >= 0 && w2 >= 0;
+            if (is_inside)
+            {
+
+                // compute barycentric weights alpha, beta, and gamma
+                float alpha = w0 / (float)area;
+                float beta = w1 / (float)area;
+                float gamma = w2 / (float)area;
+
+
+               
+
+                float interpolated_reciprocal_w = (1 / t.points[0].w) * alpha + (1 / t.points[1].w) * beta + (1 / t.points[2].w) * gamma;
+
+
+                // adjust 1/w so the pixels that are closer to the camera have smaller values
+                interpolated_reciprocal_w = 1.0 - interpolated_reciprocal_w;
+
+                float intensity = interpolated_reciprocal_w;
+
+                // Scale intensity to an 8-bit grayscale value
+                uint8_t gray = (uint8_t)(intensity * 255.0f);
+
+                // Set the alpha value to full opacity
+                uint8_t a = 0xFF;
+
+                // Assign the grayscale value to RGB components
+                uint8_t r = gray;
+                uint8_t g = gray;
+                uint8_t b = gray;
+
+                // Combine the components into a uint32_t color in ARGB format
+                uint32_t interp_color = 0x00000000;
+                interp_color |= (a << 24); // Alpha in the highest 8 bits
+                interp_color |= (r << 16); // Red in the next 8 bits
+                interp_color |= (g << 8);  // Green in the next 8 bits
+                interp_color |= b;         // Blue in the lowest 8 bits
+
+                // only draw the pixel if the depth value is less than the one previously stored in the z-buffer
+                if (interpolated_reciprocal_w < z_buffer[(window_width * y) + x])
+                {
+                    draw_pixel(x, y, interp_color);
+
+                    // Update the z-buffer value with the 1/w of this current pixel
+                    z_buffer[(window_width * y) + x] = interpolated_reciprocal_w;
+
+
+                }
             }
             
         }
@@ -96,12 +206,6 @@ void triangle_fill_barycentric(triangle_t t, color_t vertexColors[3])
                 int g = (alpha) * vertexColors[0].g + (beta) * vertexColors[1].g + (gamma) * vertexColors[2].g;
                 int b = (alpha) * vertexColors[0].b + (beta) * vertexColors[1].b + (gamma) * vertexColors[2].b;
 
-                // // Clamp color values
-                // r = r < 0 ? 0 : (r > 255 ? 255 : r);
-                // g = g < 0 ? 0 : (g > 255 ? 255 : g);
-                // b = b < 0 ? 0 : (b > 255 ? 255 : b);
-
-
                 // Combine the interpolated values into a uint32_t color
                 uint32_t interp_color = 0x00000000;
                 interp_color |= (a << 24);  // Alpha in the highest 8 bits
@@ -109,7 +213,22 @@ void triangle_fill_barycentric(triangle_t t, color_t vertexColors[3])
                 interp_color |= (g << 8);   // Green in the next 8 bits
                 interp_color |= b;          // Blue in the lowest 8 bits
 
-                draw_pixel(x, y, interp_color);
+                float interpolated_reciprocal_w = (1 / t.points[0].w) * alpha + (1 / t.points[1].w) * beta + (1 / t.points[2].w) * gamma;
+
+
+                // adjust 1/w so the pixels that are closer to the camera have smaller values
+                interpolated_reciprocal_w = 1.0 - interpolated_reciprocal_w;
+
+                // only draw the pixel if the depth value is less than the one previously stored in the z-buffer
+                if (interpolated_reciprocal_w < z_buffer[(window_width * y) + x])
+                {
+                    draw_pixel(x, y, interp_color);
+
+                    // Update the z-buffer value with the 1/w of this current pixel
+                    z_buffer[(window_width * y) + x] = interpolated_reciprocal_w;
+
+
+                }
             }
             
         }
@@ -164,6 +283,26 @@ color_t uint32_to_color_t(uint32_t color) {
     c.g = (color >> 8) & 0xFF;
     c.b = color & 0xFF;
     return c;
+}
+
+void draw_triangle(triangle_t t, uint32_t color)
+{
+    int x0, y0;
+    x0 = t.points[0].x;
+    y0 = t.points[0].y;
+
+    int x1, y1;
+    x1 = t.points[1].x;
+    y1 = t.points[1].y;
+
+    int x2, y2;
+    x2 = t.points[2].x;
+    y2 = t.points[2].y;
+
+
+    bres_draw_line(x0, y0, x1, y1, color);
+    bres_draw_line(x1, y1, x2, y2, color);
+    bres_draw_line(x2, y2, x0, y0, color);
 }
 
 void draw_textured_triangle(color_t vertexColors[3], triangle_t triangle, uint32_t* texture)
@@ -236,8 +375,20 @@ void draw_textured_triangle(color_t vertexColors[3], triangle_t triangle, uint32
                 int tex_x = abs((int)(interpolated_u * texture_width));
                 int tex_y = abs((int)(interpolated_v * texture_height));
 
+                // adjust 1/w so the pixels that are closer to the camera have smaller values
+                interpolated_reciprocal_w = 1.0 - interpolated_reciprocal_w;
 
-                draw_pixel(x, y, texture[(texture_width * tex_y)  + tex_x]);
+                // only draw the pixel if the depth value is less than the one previously stored in the z-buffer
+                if (interpolated_reciprocal_w < z_buffer[(window_width * y) + x])
+                {
+                    draw_pixel(x, y, texture[(texture_width * tex_y)  + tex_x]);
+
+                    // Update the z-buffer value with the 1/w of this current pixel
+                    z_buffer[(window_width * y) + x] = interpolated_reciprocal_w;
+
+
+                }
+                
             }
             
         }

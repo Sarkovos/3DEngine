@@ -129,12 +129,7 @@ void bres_draw_line(int x0, int y0, int x1, int y1, uint32_t color)
     draw_pixel(x1, y1, color);
 }
 
-void draw_triangle(int x0, int y0, int x1, int y1, int x2, int y2, uint32_t color)
-{
-    bres_draw_line(x0, y0, x1, y1, color);
-    bres_draw_line(x1, y1, x2, y2, color);
-    bres_draw_line(x2, y2, x0, y0, color);
-}
+
 
 /*Copy the contents of the frame buffer to the SDL texture to be displayed*/
 void render_frame_buffer(void)
@@ -160,16 +155,18 @@ void clear_frame_buffer (uint32_t color)
     }
 }
 
-void clear_z_buffer ()
+void clear_z_buffer (void)
 {
     for (int y = 0; y < window_height; y++)
     {
         for (int x = 0; x < window_width; x++)
         {
-            z_buffer[(window_width * y) + x] = 0.0;
+            z_buffer[(window_width * y) + x] = 1.0;
         }
     }
 }
+
+
 
 
 /*Free all memory*/

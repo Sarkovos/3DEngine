@@ -6,6 +6,9 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <math.h>
+#include <stdio.h>
+
+#include "triangle.h"
 
 #define FPS 30
 #define FRAME_TARGET_TIME (1000 / FPS) //How many miliseconds a frame should take
@@ -34,7 +37,9 @@ void destroy_window(void);
 void draw_pixel(int x, int y, uint32_t color);
 void draw_line(int x0, int y0, int x1, int y1, uint32_t color);
 void bres_draw_line(int x0, int y0, int x1, int y1, uint32_t color);
-void draw_triangle(int x0, int y0, int x1, int y1, int x2, int y2, uint32_t color);
+
+
+
 
 
 

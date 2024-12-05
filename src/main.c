@@ -37,6 +37,11 @@ enum cull_method {
     CULL_BACKFACE
 } cull_method;
 
+enum z_method {
+    Z_NONE,
+    Z_RENDER
+} z_method;
+
 enum render_method {
     RENDER_WIRE = 0,
     RENDER_FILL_TRIANGLE = 1,
@@ -56,11 +61,10 @@ enum lighting_method
     NO_LIGHTING = 0,
     FLAT_SHADING = 1,
     GOURAUD_SHADING = 2,
-    PHONG_SHADING = 3
 } lighting_method;
 
 // OBJ file variable
-char *filename = "./static/Amongus.obj"; 
+char *filename = "./static/drone"; 
 
 void init_perspective_matrix()
 {
@@ -123,22 +127,29 @@ void setup(void)
         window_height
     );
 
+    // Buffers to hold the full filenames
+    char filename_obj[256];
+    char filename_png[256];
+
+    // Create filenames by appending extensions
+    snprintf(filename_obj, sizeof(filename_obj), "%s.obj", filename);
+    snprintf(filename_png, sizeof(filename_png), "%s.png", filename);
+
     // Manually load the hardcoded texture data from the static array
     // mesh_texture = (uint32_t*)REDBRICK_TEXTURE;
 
     // load the texture information from an external PNG file
-    load_png_texture_data("static/cube2.png");
+    load_png_texture_data(filename_png);
 
     // load mesh data
-    load_cube_mesh_data();
-    //load_obj_file_data("./static/cube.obj");
+    //load_cube_mesh_data();
+    load_obj_file_data(filename_obj);
 
-    //max_num_triangles_to_render = initialize_obj_file_data(filename);
-    max_num_triangles_to_render = 12;
+    max_num_triangles_to_render = initialize_obj_file_data(filename_obj);
+    //max_num_triangles_to_render = 12;
 
     triangles_to_render = malloc(sizeof(triangle_t) * max_num_triangles_to_render);
 
-    load_obj_file_data(filename);
 
     init_perspective_matrix();
     init_orthographic_matrix();   
@@ -180,7 +191,7 @@ void process_input(void)
 
             if (event.key.keysym.sym == SDLK_l)
             {
-                lighting_method = (enum lighting_method)((lighting_method + 1) % 4);
+                lighting_method = (enum lighting_method)((lighting_method + 1) % 3);
                 break;
             }
 
@@ -263,14 +274,14 @@ void update(void)
         face_t  mesh_face = mesh.faces[i];
 
         vec3_t face_vertices[3];
-        face_vertices[0] = mesh.vertices[mesh_face.a - 1];
-        face_vertices[1] = mesh.vertices[mesh_face.b - 1];
-        face_vertices[2] = mesh.vertices[mesh_face.c - 1];
+        face_vertices[0] = mesh.vertices[mesh_face.a];
+        face_vertices[1] = mesh.vertices[mesh_face.b];
+        face_vertices[2] = mesh.vertices[mesh_face.c];
 
         vec3_t vertex_normals[3];
-        vertex_normals[0] = mesh.normals[mesh_face.normal_a - 1];
-        vertex_normals[1] = mesh.normals[mesh_face.normal_b - 1];
-        vertex_normals[2] = mesh.normals[mesh_face.normal_c - 1];
+        vertex_normals[0] = mesh.normals[mesh_face.normal_a];
+        vertex_normals[1] = mesh.normals[mesh_face.normal_b];
+        vertex_normals[2] = mesh.normals[mesh_face.normal_c];
 
         color_t vertex_colors[3];
         vertex_colors[0] = (color_t){ .a = 0xFF, .r = 0xFF, .g = 0xFF, .b = 0xFF }; 
@@ -418,20 +429,13 @@ void triangle_render(triangle_t triangle)
 
     if (render_method == RENDER_WIRE)
     {
-        draw_triangle(triangle.points[0].x, triangle.points[0].y, triangle.points[1].x,
-        triangle.points[1].y, triangle.points[2].x,triangle.points[2].y,
-        0xFFFFFFFF
-        );
+        draw_triangle(triangle, 0xFFFFFFFF);    
     }
 
     if (render_method == RENDER_FILL_TRIANGLE_WIRE)
     {
         triangle_fill(triangle, triangle.color);
-        draw_triangle(triangle.points[0].x, triangle.points[0].y, triangle.points[1].x,
-        triangle.points[1].y, triangle.points[2].x,triangle.points[2].y,
-        0xFFFFFFFF
-        );
-        
+        draw_triangle(triangle, 0xFFFFFF00);       
     }
 
     if (render_method == RENDER_TEXTURED)
@@ -442,10 +446,7 @@ void triangle_render(triangle_t triangle)
     if (render_method == RENDER_TEXTURED_WIRE)
     {
         draw_textured_triangle(triangle.vertex_colors, triangle, mesh_texture);
-        draw_triangle(triangle.points[0].x, triangle.points[0].y, triangle.points[1].x,
-        triangle.points[1].y, triangle.points[2].x,triangle.points[2].y,
-        0xFFFFFFFF
-        );
+        draw_triangle(triangle, 0xFFFFFFFF);
     }
 }
 
@@ -455,13 +456,10 @@ void render(void)
     for (int i = 0; i < num_triangles_to_render; i++)
     {
         triangle_t triangle = triangles_to_render[i];
-        color_t triangle_color;
+        color_t triangle_color = (color_t){ .a = 0xFF, .r = 0xFF, .g = 0xFF, .b = 0xFF }; 
 
-        // //COLORS FOR TESTING BARYCENTRIC COORDS
-        // triangle.vertex_colors[0] = (color_t){ .a = 0xFF, .r = 0xFF, .g = 0x00, .b = 0x00 };  // Red
-        // triangle.vertex_colors[1] = (color_t){ .a = 0xFF, .r = 0x00, .g = 0xFF, .b = 0x00 };  // Green
-        // triangle.vertex_colors[2] = (color_t){ .a = 0xFF, .r = 0x00, .g = 0x00, .b = 0xFF };  // Blue
-
+        if (!z_method)
+     
         // TODO: FIX BACKFACE CULLING TO BE BEFORE PROJECTION
         if (backface_cull_check(triangle))
         {
@@ -471,43 +469,9 @@ void render(void)
                 // This case uses just the basic triangle_full function, which only cares about the face color
                 case NO_LIGHTING:
                 {
+                    triangle.color = triangle_color;
                     
-                    if (render_method == RENDER_FILL_TRIANGLE)
-                    {
-                        triangle_fill(triangle, triangle.color);
-                    }
-
-                    if (render_method == RENDER_WIRE)
-                    {
-                        draw_triangle(triangle.points[0].x, triangle.points[0].y, triangle.points[1].x,
-                        triangle.points[1].y, triangle.points[2].x,triangle.points[2].y,
-                        0xFFFFFFFF
-                        );
-                    }
-
-                    if (render_method == RENDER_FILL_TRIANGLE_WIRE)
-                    {
-                        triangle_fill(triangle, triangle.color);
-                        draw_triangle(triangle.points[0].x, triangle.points[0].y, triangle.points[1].x,
-                        triangle.points[1].y, triangle.points[2].x,triangle.points[2].y,
-                        0xFFFFFFFF
-                        );
-                        
-                    }
-
-                    if (render_method == RENDER_TEXTURED)
-                    {
-                        draw_textured_triangle(triangle.vertex_colors, triangle, mesh_texture);
-                    }
-
-                    if (render_method == RENDER_TEXTURED_WIRE)
-                    {
-                        draw_textured_triangle(triangle.vertex_colors, triangle, mesh_texture);
-                        draw_triangle(triangle.points[0].x, triangle.points[0].y, triangle.points[1].x,
-                        triangle.points[1].y, triangle.points[2].x,triangle.points[2].y,
-                        0xFFFFFFFF
-                        );
-                    }
+                    triangle_render(triangle);
                     break;
                 }
 
@@ -530,50 +494,37 @@ void render(void)
                 // so vertex colors dont get overwritten
                 case GOURAUD_SHADING:
                 {
-                    // Normalize the light direction vector
-                    vec3_normalize(&light.direction);
+                    triangle_z_buffer(triangle);
+                    // // Normalize the light direction vector
+                    // vec3_normalize(&light.direction);
 
-                    for (int i = 0; i < 3; i++)
-                    {
+                    // for (int i = 0; i < 3; i++)
+                    // {
                         
-                        float light_intensity_factor = -vec3_dot(triangle.vertex_normals[i], light.direction);
+                    //     float light_intensity_factor = -vec3_dot(triangle.vertex_normals[i], light.direction);
 
-                        // printf("Vertex %d Light Intensity: %f\n", i, light_intensity_factor);
+                    //     // printf("Vertex %d Light Intensity: %f\n", i, light_intensity_factor);
+                    //     triangle.vertex_colors[i] = light_apply_intensity(triangle.vertex_colors[i], light_intensity_factor);
+                    // }
 
-                        triangle.vertex_colors[i] = light_apply_intensity(triangle.vertex_colors[i], light_intensity_factor);
-                    }
+                    // if (render_method == RENDER_FILL_TRIANGLE)
+                    // {
+                    //     triangle_fill_barycentric(triangle, triangle.vertex_colors);
+                    // }
 
-                    if (render_method == RENDER_FILL_TRIANGLE)
-                    {
-                        triangle_fill_barycentric(triangle, triangle.vertex_colors);
-                    }
+                    // if (render_method == RENDER_WIRE)
+                    // {
+                    //     draw_triangle(triangle, 0xFFFFFFFF);
+                    // }
 
-                    if (render_method == RENDER_WIRE)
-                    {
-                        draw_triangle(triangle.points[0].x, triangle.points[0].y, triangle.points[1].x,
-                        triangle.points[1].y, triangle.points[2].x,triangle.points[2].y,
-                        0xFFFFFFFF
-                        );
-                    }
-
-                    if (render_method == RENDER_FILL_TRIANGLE_WIRE)
-                    {
-                        triangle_fill_barycentric(triangle, triangle.vertex_colors);
-                        draw_triangle(triangle.points[0].x, triangle.points[0].y, triangle.points[1].x,
-                        triangle.points[1].y, triangle.points[2].x,triangle.points[2].y,
-                        0xFFFFFFFF
-                        );
+                    // if (render_method == RENDER_FILL_TRIANGLE_WIRE)
+                    // {
+                    //     triangle_fill_barycentric(triangle, triangle.vertex_colors);
+                    //     draw_triangle(triangle, 0xFFFFFFFF);
                         
-                    }
-                    break;
+                    // }
+                    // break;
                 }
-
-                case PHONG_SHADING:
-                {
-                    triangle_render(triangle);
-                    break;
-                }
-
             }
         }
             
@@ -600,33 +551,6 @@ void free_resources(void)
     upng_free(png_texture);
 }
 
-// Function to print a 4x4 matrix
-void print_mat4(const char* name, mat4_t matrix) {
-    printf("%s =\n", name);
-    for (int i = 0; i < 4; i++) {
-        printf("[ ");
-        for (int j = 0; j < 4; j++) {
-            printf("%8.4f ", matrix.m[i][j]);
-        }
-        printf("]\n");
-    }
-    printf("\n");
-}
-
-// Function to print a 4x4 matrix
-void print_mat3(const char* name, mat3_t matrix) {
-    printf("%s =\n", name);
-    for (int i = 0; i < 3; i++) {
-        printf("[ ");
-        for (int j = 0; j < 3; j++) {
-            printf("%8.4f ", matrix.m[i][j]);
-        }
-        printf("]\n");
-    }
-    printf("\n");
-}
-
-
 int main(void){
 
     is_running = initialize_window();
@@ -642,7 +566,6 @@ int main(void){
 
     destroy_window();
     free_resources();
-
 
     return 0;
 }

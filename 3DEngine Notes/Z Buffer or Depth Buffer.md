@@ -1,0 +1,9 @@
+- A 
+- Our Z buffer will basically parallel our frame buffer in size, but instead of colors, we will be storing float values.
+- At first, the problem seems simple.
+	- If we know the Z coordinates of the triangle's vertices, we can interpolate these using the barycentric coordinates
+- Sadly, this doesn't work, and its thanks to our projection.
+- Because of perspective divide, the z-value we want to interpolate no longer varies linearly across the surface of the 2D triangle.
+- Recall, perspective projection preserves lines but does not preserve distances.
+- The Z-buffer was proposed by Ed Catmull in his 1974 paper, "A Subdivision Algorithm for Computer Display of Curved Surfaces"
+- 
