@@ -60,11 +60,11 @@ enum lighting_method
 {
     NO_LIGHTING = 0,
     FLAT_SHADING = 1,
-    GOURAUD_SHADING = 2,
+    Z_SHADING = 2,
 } lighting_method;
 
 // OBJ file variable
-char *filename = "./static/drone"; 
+char *filename = "./static/LP"; 
 
 void init_perspective_matrix()
 {
@@ -86,7 +86,7 @@ void init_perspective_matrix()
     t = r / aspect;
     b = -t;
 
-    ortho_height= 10.0; 
+    ortho_height= 5.0; 
     ortho_width = ortho_height * aspect;
 
     //Initialize projection matrix
@@ -421,32 +421,64 @@ void update(void)
 }
 
 void triangle_render(triangle_t triangle)
-{
-    if (render_method == RENDER_FILL_TRIANGLE)
+{   if (projection_method == ORTHOGRAPHIC)
     {
-        triangle_fill(triangle, triangle.color);
+        if (render_method == RENDER_FILL_TRIANGLE)
+        {
+            triangle_fill_orthographic(triangle, triangle.color);
+        }
+
+        if (render_method == RENDER_WIRE)
+        {
+            draw_triangle(triangle, 0xFFFFFFFF);    
+        }
+
+        if (render_method == RENDER_FILL_TRIANGLE_WIRE)
+        {
+            triangle_fill_orthographic(triangle, triangle.color);
+            draw_triangle(triangle, 0xFFFF0000);       
+        }
+
+        if (render_method == RENDER_TEXTURED)
+        {
+            draw_textured_triangle_orthographic(triangle.vertex_colors, triangle, mesh_texture);
+        }
+
+        if (render_method == RENDER_TEXTURED_WIRE)
+        {
+            draw_textured_triangle_orthographic(triangle.vertex_colors, triangle, mesh_texture);
+            draw_triangle(triangle, 0xFFFFFFFF);
+        }
     }
 
-    if (render_method == RENDER_WIRE)
+    else
     {
-        draw_triangle(triangle, 0xFFFFFFFF);    
-    }
+        if (render_method == RENDER_FILL_TRIANGLE)
+        {
+            triangle_fill(triangle, triangle.color);
+        }
 
-    if (render_method == RENDER_FILL_TRIANGLE_WIRE)
-    {
-        triangle_fill(triangle, triangle.color);
-        draw_triangle(triangle, 0xFFFFFF00);       
-    }
+        if (render_method == RENDER_WIRE)
+        {
+            draw_triangle(triangle, 0xFFFFFFFF);    
+        }
 
-    if (render_method == RENDER_TEXTURED)
-    {
-        draw_textured_triangle(triangle.vertex_colors, triangle, mesh_texture);
-    }
+        if (render_method == RENDER_FILL_TRIANGLE_WIRE)
+        {
+            triangle_fill(triangle, triangle.color);
+            draw_triangle(triangle, 0xFFFF0000);       
+        }
 
-    if (render_method == RENDER_TEXTURED_WIRE)
-    {
-        draw_textured_triangle(triangle.vertex_colors, triangle, mesh_texture);
-        draw_triangle(triangle, 0xFFFFFFFF);
+        if (render_method == RENDER_TEXTURED)
+        {
+            draw_textured_triangle(triangle.vertex_colors, triangle, mesh_texture);
+        }
+
+        if (render_method == RENDER_TEXTURED_WIRE)
+        {
+            draw_textured_triangle(triangle.vertex_colors, triangle, mesh_texture);
+            draw_triangle(triangle, 0xFFFFFFFF);
+        }
     }
 }
 
@@ -457,8 +489,6 @@ void render(void)
     {
         triangle_t triangle = triangles_to_render[i];
         color_t triangle_color = (color_t){ .a = 0xFF, .r = 0xFF, .g = 0xFF, .b = 0xFF }; 
-
-        if (!z_method)
      
         // TODO: FIX BACKFACE CULLING TO BE BEFORE PROJECTION
         if (backface_cull_check(triangle))
@@ -466,7 +496,7 @@ void render(void)
 
             switch (lighting_method)
             {
-                // This case uses just the basic triangle_full function, which only cares about the face color
+                // This case uses just the basic triangle_fill function, which only cares about the face color
                 case NO_LIGHTING:
                 {
                     triangle.color = triangle_color;
@@ -490,40 +520,10 @@ void render(void)
                 }
 
 
-                // NOTE: NOT DONE!! Probably have to implement a way to store each vertices information seperately
-                // so vertex colors dont get overwritten
-                case GOURAUD_SHADING:
+                // 
+                case Z_SHADING:
                 {
                     triangle_z_buffer(triangle);
-                    // // Normalize the light direction vector
-                    // vec3_normalize(&light.direction);
-
-                    // for (int i = 0; i < 3; i++)
-                    // {
-                        
-                    //     float light_intensity_factor = -vec3_dot(triangle.vertex_normals[i], light.direction);
-
-                    //     // printf("Vertex %d Light Intensity: %f\n", i, light_intensity_factor);
-                    //     triangle.vertex_colors[i] = light_apply_intensity(triangle.vertex_colors[i], light_intensity_factor);
-                    // }
-
-                    // if (render_method == RENDER_FILL_TRIANGLE)
-                    // {
-                    //     triangle_fill_barycentric(triangle, triangle.vertex_colors);
-                    // }
-
-                    // if (render_method == RENDER_WIRE)
-                    // {
-                    //     draw_triangle(triangle, 0xFFFFFFFF);
-                    // }
-
-                    // if (render_method == RENDER_FILL_TRIANGLE_WIRE)
-                    // {
-                    //     triangle_fill_barycentric(triangle, triangle.vertex_colors);
-                    //     draw_triangle(triangle, 0xFFFFFFFF);
-                        
-                    // }
-                    // break;
                 }
             }
         }

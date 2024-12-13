@@ -9,6 +9,7 @@ float edge_cross(vec2_t* a, vec2_t* b, vec2_t* p)
     return ab.x * ap.y - ab.y * ap.x;
 
 }
+
 void triangle_fill(triangle_t t, color_t color)
 {
     vec2_t v0 = { t.points[0].x, t.points[0].y };
@@ -235,6 +236,63 @@ void triangle_fill_barycentric(triangle_t t, color_t vertexColors[3])
     }
 }
 
+void triangle_fill_orthographic(triangle_t t, color_t color)
+{
+    vec2_t v0 = { t.points[0].x, t.points[0].y };
+    vec2_t v1 = { t.points[1].x, t.points[1].y };
+    vec2_t v2 = { t.points[2].x, t.points[2].y };
+
+    // Find the bounding box with all canidate pixels
+    int x_min = floor(fmin(fmin(v0.x, v1.x), v2.x));
+    int y_min = floor(fmin(fmin(v0.y, v1.y), v2.y));
+    int x_max = ceil(fmax(fmax(v0.x, v1.x), v2.x));
+    int y_max = ceil(fmax(fmax(v0.y, v1.y), v2.y));
+
+    float bias0 = is_top_left(&v1, &v2) ? 0 : -0.0001;
+    float bias1 = is_top_left(&v2, &v0) ? 0 : -0.0001;
+    float bias2 = is_top_left(&v0, &v1) ? 0 : -0.0001;
+
+    // loop all canidate pixels inside the bounding box
+    for (int y = y_min; y <= y_max; y++)
+    {
+        for (int x = x_min; x <= x_max; x++)
+        {
+            vec2_t p = {x, y};
+
+            // Find the area of the entire triangle/parallelogram
+            float area = edge_cross(&v0, &v1, &v2);
+
+            // check if the edges and the point all have a positive cross product
+            // if all cross products are positive, this point is within the triangle
+            float w0 = edge_cross(&v1, &v2, &p) + bias0;
+            float w1 = edge_cross(&v2, &v0, &p) + bias1;
+            float w2 = edge_cross(&v0, &v1, &p) + bias2;
+
+            
+
+            bool is_inside = w0 >= 0 && w1 >= 0 && w2 >= 0;
+            if (is_inside)
+            {
+                // compute barycentric weights alpha, beta, and gamma
+                float alpha = w0 / (float)area;
+                float beta = w1 / (float)area;
+                float gamma = w2 / (float)area;
+
+        
+                // Interpolate the z-value for orthographic depth testing
+                float interpolated_z = alpha * t.points[0].z + beta * t.points[1].z + gamma * t.points[2].z;
+
+                // Only draw if this pixel is closer than what's currently in the z-buffer
+                if (interpolated_z < z_buffer[(window_width * y) + x]) 
+                {
+                    draw_pixel(x, y, color_t_to_uint32(color));
+                    z_buffer[(window_width * y) + x] = interpolated_z;
+                }
+            } 
+        }
+    }
+}
+
 bool is_top_left(vec2_t* start, vec2_t* end)
 {
     vec2_t edge = { end->x - start->x, end->y - start->y };
@@ -303,6 +361,83 @@ void draw_triangle(triangle_t t, uint32_t color)
     bres_draw_line(x0, y0, x1, y1, color);
     bres_draw_line(x1, y1, x2, y2, color);
     bres_draw_line(x2, y2, x0, y0, color);
+}
+
+void draw_textured_triangle_orthographic(color_t vertexColors[3], triangle_t triangle, uint32_t* texture)
+{
+    vec2_t v0 = { triangle.points[0].x, triangle.points[0].y };
+    vec2_t v1 = { triangle.points[1].x, triangle.points[1].y };
+    vec2_t v2 = { triangle.points[2].x, triangle.points[2].y };
+
+    // Find the bounding box with all canidate pixels
+    int x_min = floor(fmin(fmin(v0.x, v1.x), v2.x));
+    int y_min = floor(fmin(fmin(v0.y, v1.y), v2.y));
+    int x_max = ceil(fmax(fmax(v0.x, v1.x), v2.x));
+    int y_max = ceil(fmax(fmax(v0.y, v1.y), v2.y));
+
+    float bias0 = is_top_left(&v1, &v2) ? 0 : -0.0001;
+    float bias1 = is_top_left(&v2, &v0) ? 0 : -0.0001;
+    float bias2 = is_top_left(&v0, &v1) ? 0 : -0.0001;
+
+    // Find the area of the entire triangle/parallelogram
+    float area = edge_cross(&v0, &v1, &v2);
+
+    // loop all canidate pixels inside the bounding box
+    for (int y = y_min; y <= y_max; y++)
+    {
+        for (int x = x_min; x <= x_max; x++)
+        {
+            vec2_t p = {x, y};
+
+            // check if the edges and the point all have a positive cross product
+            // if all cross products are positive, this point is within the triangle
+            float w0 = edge_cross(&v1, &v2, &p) + bias0;
+            float w1 = edge_cross(&v2, &v0, &p) + bias1;
+            float w2 = edge_cross(&v0, &v1, &p) + bias2;
+
+            bool is_inside = w0 >= 0 && w1 >= 0 && w2 >= 0;
+            if (is_inside)
+            {
+
+                // compute barycentric weights alpha, beta, and gamma
+                float alpha = w0 / (float)area;
+                float beta = w1 / (float)area;
+                float gamma = w2 / (float)area;
+
+                // For orthographic rendering, assume w = 1.0 for all points
+                float u0 = triangle.texcoords[0].u;
+                float v0 = triangle.texcoords[0].v;
+                float u1 = triangle.texcoords[1].u;
+                float v1 = triangle.texcoords[1].v;
+                float u2 = triangle.texcoords[2].u;
+                float v2 = triangle.texcoords[2].v;
+
+                float z0 = triangle.points[0].z;
+                float z1 = triangle.points[1].z;
+                float z2 = triangle.points[2].z;
+
+                // No dividing by w for orthographic. Just do linear interpolation.
+                float interpolated_u = alpha * u0 + beta * u1 + gamma * u2;
+                float interpolated_v = alpha * v0 + beta * v1 + gamma * v2;
+
+                // Interpolate depth linearly as well.
+                float interpolated_z = alpha * z0 + beta * z1 + gamma * z2;
+
+
+                // Now use interpolated_z directly for depth testing without "1 - w" or reciprocal logic
+                if (interpolated_z < z_buffer[(window_width * y) + x])
+                {
+                    int tex_x = (int)(interpolated_u * texture_width) % texture_width;
+                    int tex_y = (int)(interpolated_v * texture_height) % texture_height;
+
+                    draw_pixel(x, y, texture[(texture_width * tex_y) + tex_x]);
+                    z_buffer[(window_width * y) + x] = interpolated_z;
+                }
+                
+            }
+            
+        }
+    }
 }
 
 void draw_textured_triangle(color_t vertexColors[3], triangle_t triangle, uint32_t* texture)
@@ -377,7 +512,7 @@ void draw_textured_triangle(color_t vertexColors[3], triangle_t triangle, uint32
 
                 // adjust 1/w so the pixels that are closer to the camera have smaller values
                 interpolated_reciprocal_w = 1.0 - interpolated_reciprocal_w;
-
+                
                 // only draw the pixel if the depth value is less than the one previously stored in the z-buffer
                 if (interpolated_reciprocal_w < z_buffer[(window_width * y) + x])
                 {

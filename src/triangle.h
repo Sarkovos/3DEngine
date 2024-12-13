@@ -47,6 +47,9 @@ uint32_t color_t_to_uint32(color_t color);
 color_t uint32_to_color_t(uint32_t color);
 void draw_triangle(triangle_t t, uint32_t color);
 void triangle_z_buffer(triangle_t t);
+void draw_textured_triangle_orthographic(color_t vertexColors[3], triangle_t triangle, uint32_t* texture);
+void triangle_fill_orthographic(triangle_t t, color_t color);
+
 
 
 #endif
