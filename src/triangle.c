@@ -423,7 +423,6 @@ void draw_textured_triangle_orthographic(color_t vertexColors[3], triangle_t tri
                 // Interpolate depth linearly as well.
                 float interpolated_z = alpha * z0 + beta * z1 + gamma * z2;
 
-
                 // Now use interpolated_z directly for depth testing without "1 - w" or reciprocal logic
                 if (interpolated_z < z_buffer[(window_width * y) + x])
                 {
@@ -496,7 +495,7 @@ void draw_textured_triangle(color_t vertexColors[3], triangle_t triangle, uint32
                 float interpolated_v;
                 float interpolated_reciprocal_w;
 
-                // perform the interpolation of all U/w and V/w values using barycentric weights and a factpr pf 1/w
+                // perform the interpolation of all U/w and V/w values using barycentric weights and a factor of 1/w
                 interpolated_u = alpha * (u0 / triangle.points[0].w) + (u1 / triangle.points[1].w) * beta + (u2 / triangle.points[2].w) * gamma;
                 interpolated_v = alpha * (v_0 / triangle.points[0].w) + (v_1 / triangle.points[1].w) * beta + (v_2 / triangle.points[2].w) * gamma;
 
@@ -516,16 +515,12 @@ void draw_textured_triangle(color_t vertexColors[3], triangle_t triangle, uint32
                 // only draw the pixel if the depth value is less than the one previously stored in the z-buffer
                 if (interpolated_reciprocal_w < z_buffer[(window_width * y) + x])
                 {
-                    draw_pixel(x, y, texture[(texture_width * tex_y)  + tex_x]);
+                    draw_pixel(x, y, texture[(texture_width * tex_y) + tex_x]);
 
                     // Update the z-buffer value with the 1/w of this current pixel
                     z_buffer[(window_width * y) + x] = interpolated_reciprocal_w;
-
-
                 }
-                
             }
-            
         }
     }
 }

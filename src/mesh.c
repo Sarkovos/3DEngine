@@ -106,6 +106,7 @@ void load_obj_file_data(char* filename)
             
             // Invert texcoord.v
             texcoord.v = 1.0f - texcoord.v;
+            
 
             array_push(texcoords, texcoord);
         }

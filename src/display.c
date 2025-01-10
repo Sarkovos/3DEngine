@@ -14,22 +14,15 @@ SDL_Texture* frame_buffer_texture = NULL;
 int window_width = 800;
 int window_height = 800;
 
-/*Initialize an SDL Window and verify it works properly*/
+// Initialize an SDL Window and verify it works properly
 bool initialize_window(void)
 {
-    //Iniitalize SDL
-    if (SDL_Init(SDL_INIT_EVERYTHING) != 0) //SDL Constant to init everything
+    // Initialize SDL
+    if (SDL_Init(SDL_INIT_EVERYTHING) != 0) // SDL Constant to init everything
     {
         fprintf(stderr, "Error initializing SDL. \n");
         return false;
     }
-
-    //USe SDL to query what is the fullscreen max width and height
-    // SDL_DisplayMode display_mode;
-    // SDL_GetCurrentDisplayMode(0, &display_mode);
-
-    // window_width = display_mode.w;
-    // window_height = display_mode.h;
 
     window = SDL_CreateWindow(
         NULL,
@@ -46,29 +39,28 @@ bool initialize_window(void)
         return false;
     }
 
-    //Create SDL renderer
+    // Create SDL renderer
     renderer = SDL_CreateRenderer(window, -1, 0);
     if (!renderer)
     {
         fprintf(stderr, "Error Creating SDL Renderer.\n");
         return false;
     }
-    //SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN);
 
     return true;
 }
 
-/*Draws pixel at x,y position in our frame buffer*/
+// Draws pixel at x,y position in our frame buffer
 void draw_pixel(int x, int y, uint32_t color)
 {
-
     // Invert the y-coordinate for top-left origin systems
     // places points with y = 0 at the bottom of the screen
     
     int screen_y = window_height - y - 1;
-    if (x < window_width && screen_y < window_height)
+    int screen_x = window_width - x - 1;
+    if (screen_x < window_width && screen_y < window_height)
     {
-        frame_buffer[(window_width * screen_y) + x] = color;
+        frame_buffer[(window_width * screen_y) + screen_x] = color;
     }
     
 }
@@ -123,7 +115,6 @@ void bres_draw_line(int x0, int y0, int x1, int y1, uint32_t color)
             error += dx;
             y0 += stepY; //move y0 in the y direction setup in stepY
         }
-
         
     }
     draw_pixel(x1, y1, color);

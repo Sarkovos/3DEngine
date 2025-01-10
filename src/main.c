@@ -103,22 +103,21 @@ void init_orthographic_matrix()
     orthographic_matrix = mat4_make_orthographic(t, b, l, r, znear, zfar);
 }
 
-/*Setup Functions to initialize variables and game objects*/
+// Setup Functions to initialize variables and game objects
 void setup(void) 
 {
     // Initialze render mode and triangle culling method
     render_method = RENDER_FILL_TRIANGLE_WIRE;
 
-    //cull_method = CULL_BACKFACE;
     projection_method = VERTICAL_PERSPECTIVE;
 
-    //Allocate the required memory in bytes to hold the frame buffer
+    // Allocate the required memory in bytes to hold the frame buffer
     frame_buffer = (uint32_t*) malloc(sizeof(uint32_t) * window_width * window_height); //The cast here is not required, helps with porting between C and C++
 
-    //Allocate the required memory in bytes to hold the z buffer
+    // Allocate the required memory in bytes to hold the z buffer
     z_buffer = (float*) malloc(sizeof(float) * window_width * window_height);
 
-    //creating an SDL texture that is used to display the frame buffer
+    // Creating an SDL texture that is used to display the frame buffer
     frame_buffer_texture = SDL_CreateTexture(
         renderer,
         SDL_PIXELFORMAT_ARGB8888,
@@ -135,21 +134,17 @@ void setup(void)
     snprintf(filename_obj, sizeof(filename_obj), "%s.obj", filename);
     snprintf(filename_png, sizeof(filename_png), "%s.png", filename);
 
-    // Manually load the hardcoded texture data from the static array
-    // mesh_texture = (uint32_t*)REDBRICK_TEXTURE;
-
-    // load the texture information from an external PNG file
+    // Load the texture information from an external PNG file
     load_png_texture_data(filename_png);
 
-    // load mesh data
+    // Load mesh data
     //load_cube_mesh_data();
-    load_obj_file_data(filename_obj);
-
-    max_num_triangles_to_render = initialize_obj_file_data(filename_obj);
     //max_num_triangles_to_render = 12;
 
+    load_obj_file_data(filename_obj);
+    max_num_triangles_to_render = initialize_obj_file_data(filename_obj);
+    
     triangles_to_render = malloc(sizeof(triangle_t) * max_num_triangles_to_render);
-
 
     init_perspective_matrix();
     init_orthographic_matrix();   
@@ -220,10 +215,10 @@ void process_input(void)
 
 void update(void)
 {
-    //wait some time until we reach the target frame time in milliseconds
+    // Wait some time until we reach the target frame time in milliseconds
     int time_to_wait = FRAME_TARGET_TIME - (SDL_GetTicks() - previous_frame_time);
 
-    //only delay execution if we are running too fast
+    // Only delay execution if we are running too fast
     if (time_to_wait > 0 && time_to_wait <= FRAME_TARGET_TIME)
     {
         SDL_Delay(time_to_wait);
@@ -231,25 +226,27 @@ void update(void)
 
     previous_frame_time = SDL_GetTicks();
 
-    // initialize the counter of triangles to render for current frame
+    // Initialize the counter of triangles to render for current frame
     num_triangles_to_render = 0;
 
-    mesh.rotation.x += 0.01;
+
+    // Mesh Transformations
+    //mesh.rotation.x += 0.01;
     mesh.rotation.y -= 0.01;
-    mesh.rotation.z += 0.01;
+    //mesh.rotation.z += 0.01;
 
     //mesh.scale.x += 0.002;
     //mesh.scale.y += 0.01;
     mesh.translation.z = 5.0;
     //mesh.translation.x += 0.01;
 
-    //Create a scale matrix that will be used to multiply the mesh vertices
+    // Create a scale matrix that will be used to multiply the mesh vertices
     mat4_t scale_matrix = mat4_make_scale(mesh.scale.x, mesh.scale.y, mesh.scale.z);
 
-    //Create a translate matrix that will be used to multiply the mesh vertices
+    // Create a translation matrix that will be used to multiply the mesh vertices
     mat4_t translation_matrix = mat4_make_translation(mesh.translation.x, mesh.translation.y, mesh.translation.z);
 
-    //Create rotation matrices that will be used to multiply the mesh vertices
+    // Create rotation matrices that will be used to multiply the mesh vertices
     mat4_t rotation_matrix_x = mat4_make_rotation_x(mesh.rotation.x);
     mat4_t rotation_matrix_y = mat4_make_rotation_y(mesh.rotation.y);
     mat4_t rotation_matrix_z = mat4_make_rotation_z(mesh.rotation.z);
@@ -267,7 +264,7 @@ void update(void)
     normals_world_matrix = mat3_inverse(normals_world_matrix);
     normals_world_matrix = mat3_transpose(normals_world_matrix);
     
-    //loop all triangle faces of our mesh
+    // Loop all triangle faces of our mesh
     int num_faces = array_length(mesh.faces);
     for (int i = 0; i < num_faces; i++)
     {
@@ -288,18 +285,17 @@ void update(void)
         vertex_colors[1] = (color_t){ .a = 0xFF, .r = 0x00, .g = 0xFF, .b = 0xFF }; 
         vertex_colors[2] = (color_t){ .a = 0xFF, .r = 0x00, .g = 0xFF, .b = 0xFF }; 
 
-
         vec4_t transformed_vertices[3];
 
-        // loop all three vertices of this current face and apply transformations
+        // Loop all three vertices of this current face and apply transformations
         for (int j = 0; j < 3; j++)
         {
             vec4_t transformed_vertex = vec4_from_vec3(face_vertices[j]);
 
-            // multiply the world matrix by the original vector
+            // Multiply the world matrix by the original vector
             transformed_vertex = mat4_mul_vec4(world_matrix, transformed_vertex);
 
-            //save transformed vertex in the array of transformed vertices
+            // Save transformed vertex in the array of transformed vertices
             transformed_vertices[j] = transformed_vertex;
         }
 
@@ -336,7 +332,8 @@ void update(void)
 		}
 
         vec4_t projected_points[3];
-        //loop all three vertices to perfrom projection
+
+        // Loop all three vertices to perfrom projection
         if (projection_method == VERTICAL_PERSPECTIVE)
         {
             for (int j = 0; j < 3; j++)
@@ -377,7 +374,7 @@ void update(void)
         }
         
 
-         // **Create the triangle with per-vertex colors**
+        // Create the triangle
         triangle_t projected_triangle = {
             .points = {
                 { projected_points[0].x, projected_points[0].y, projected_points[0].z, projected_points[0].w },
@@ -402,21 +399,20 @@ void update(void)
         };
         
         if (lighting_method == FLAT_SHADING)
-			{
-				projected_triangle.vertex_normals[0] = face_normal;
-				projected_triangle.vertex_normals[1] = face_normal;
-				projected_triangle.vertex_normals[2] = face_normal;
-			}
+        {
+            projected_triangle.vertex_normals[0] = face_normal;
+            projected_triangle.vertex_normals[1] = face_normal;
+            projected_triangle.vertex_normals[2] = face_normal;
+        }
 
-        //Save the projected triangle in the array of triangles to render
-        //These are the triangles that are sent to the render function
+        // Save the projected triangle in the array of triangles to render
+        // These are the triangles that are sent to the render function
         if (num_triangles_to_render < max_num_triangles_to_render)
         {
             triangles_to_render[num_triangles_to_render] = projected_triangle;
             num_triangles_to_render++;
         }
         
-
     }
 }
 
@@ -484,7 +480,6 @@ void triangle_render(triangle_t triangle)
 
 void render(void)
 {
-
     for (int i = 0; i < num_triangles_to_render; i++)
     {
         triangle_t triangle = triangles_to_render[i];
@@ -493,7 +488,6 @@ void render(void)
         // TODO: FIX BACKFACE CULLING TO BE BEFORE PROJECTION
         if (backface_cull_check(triangle))
         {
-
             switch (lighting_method)
             {
                 // This case uses just the basic triangle_fill function, which only cares about the face color
@@ -519,15 +513,12 @@ void render(void)
                     break;
                 }
 
-
-                // 
                 case Z_SHADING:
                 {
                     triangle_z_buffer(triangle);
                 }
             }
-        }
-            
+        }     
     }
 
     render_frame_buffer();
@@ -538,7 +529,7 @@ void render(void)
 
 }
 
-// free the memory that was dynamically allocated by the program
+// Free the memory that was dynamically allocated by the program
 void free_resources(void)
 {
     array_free(mesh.faces);

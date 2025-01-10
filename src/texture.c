@@ -15,7 +15,6 @@ void load_png_texture_data(char* filename)
         upng_decode(png_texture);
         if (upng_get_error(png_texture) == UPNG_EOK)
         {
-            
             mesh_texture = (uint32_t*)upng_get_buffer(png_texture);
             texture_width = upng_get_width(png_texture);
             texture_height = upng_get_height(png_texture);
