@@ -31,7 +31,7 @@ mat4_t mat4_transpose(mat4_t m);
 mat3_t mat3_inverse(mat3_t m);
 mat3_t mat3_transpose(mat3_t m);
 
-
+mat4_t mat4_look_at (vec3_t eye, vec3_t target, vec3_t up);
 
 vec3_t mat3_mul_vec3(mat3_t m, vec3_t v);
 mat3_t mat3_from_mat4(mat4_t m4);

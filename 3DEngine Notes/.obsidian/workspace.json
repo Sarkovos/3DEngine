@@ -34,9 +34,23 @@
               "icon": "lucide-file",
               "title": "Z Buffer or Depth Buffer"
             }
+          },
+          {
+            "id": "827fe18f9f4b3249",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "Camera.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "Camera"
+            }
           }
         ],
-        "currentTab": 1
+        "currentTab": 2
       }
     ],
     "direction": "vertical"
@@ -189,14 +203,16 @@
       "table-editor-obsidian:Advanced Tables Toolbar": false
     }
   },
-  "active": "6e72da3331b386f6",
+  "active": "827fe18f9f4b3249",
   "lastOpenFiles": [
-    "Terms.md",
     "Rasterization.md",
+    "3D Engine Notes.md",
+    "Camera.md",
+    "Pasted image 20250110003758.png",
+    "Z Buffer or Depth Buffer.md",
+    "Terms.md",
     "DDA (Digital Differential analyzer).md",
     "Bresenham's Algorithm.md",
-    "Z Buffer or Depth Buffer.md",
-    "3D Engine Notes.md",
     "Pasted image 20241022212808 1.png",
     "Pasted image 20241022212808.png",
     "Pasted image 20241022212842.png",
@@ -208,7 +224,6 @@
     "Pasted image 20240923215312 1.png",
     "Projection Matrix.md",
     "Projection Matrices.md",
-    "Pasted image 20240926144417.png",
-    "Pasted image 20240923222053.png"
+    "Pasted image 20240926144417.png"
   ]
 }
